@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Grocery Shop Inventory Calculator & Management</title>
+
+  <!-- Google Fonts & Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="css/style.css">
+
+  <!-- Chart.js, SheetJS XLSX & JsBarcode Libraries -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+</head>
+<body>
+
+  <!-- Sidebar Navigation -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-brand-logo">
+        <i class="fa-solid fa-basket-shopping"></i>
+      </div>
+      <div>
+        <div class="sidebar-brand-title">Grocery POS</div>
+        <div class="sidebar-brand-subtitle">Inventory Calculator</div>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Main Console</div>
+      <a href="#" class="nav-item active" data-tab="tab-dashboard">
+        <i class="fa-solid fa-chart-line"></i> Dashboard
+      </a>
+      <a href="#" class="nav-item" data-tab="tab-calculator">
+        <i class="fa-solid fa-calculator"></i> Stock Calculator
+      </a>
+      <a href="#" class="nav-item" data-tab="tab-pos">
+        <i class="fa-solid fa-cart-shopping"></i> POS & Sales
+      </a>
+
+      <div class="nav-section-label">Inventory Management</div>
+      <a href="#" class="nav-item" data-tab="tab-products">
+        <i class="fa-solid fa-boxes-stacked"></i> Products
+      </a>
+      <a href="#" class="nav-item" data-tab="tab-categories">
+        <i class="fa-solid fa-tags"></i> Categories
+      </a>
+      <a href="#" class="nav-item" data-tab="tab-suppliers">
+        <i class="fa-solid fa-truck"></i> Suppliers
+      </a>
+
+      <div class="nav-section-label">Analytics & Logs</div>
+      <a href="#" class="nav-item" data-tab="tab-history">
+        <i class="fa-solid fa-clock-rotate-left"></i> Sales History
+      </a>
+      <a href="#" class="nav-item" data-tab="tab-reports">
+        <i class="fa-solid fa-file-contract"></i> Reports & Export
+      </a>
+      <a href="#" class="nav-item" data-tab="tab-backup">
+        <i class="fa-solid fa-database"></i> Backup & Restore
+      </a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div style="font-size:0.75rem; color:var(--text-muted); text-align:center;">
+        Grocery Calculator v1.0 &copy; 2026
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main Content Layout -->
+  <div class="app-container">
+
+    <!-- Top Navigation Header -->
+    <header class="navbar">
+      <div class="navbar-left">
+        <button class="toggle-sidebar-btn" id="toggle-sidebar">
+          <i class="fa-solid fa-bars"></i>
+        </button>
+        <div class="search-box-header">
+          <i class="fa-solid fa-magnifying-glass"></i>
+          <input type="text" id="main-search-input" placeholder="Search product, category, barcode...">
+        </div>
+      </div>
+
+      <div class="navbar-right">
+        <!-- Theme Toggle -->
+        <button class="theme-toggle-btn" id="theme-toggle-btn" title="Toggle Light/Dark Theme">
+          <i class="fa-solid fa-moon"></i>
+        </button>
+
+        <!-- Notification Bell -->
+        <div class="notification-dropdown-wrapper">
+          <button class="notification-btn" id="notification-btn" title="Notifications">
+            <i class="fa-solid fa-bell"></i>
+            <span class="notification-badge" id="notif-badge" style="display:none;">0</span>
+          </button>
+
+          <div class="notification-menu" id="notification-menu">
+            <div class="notification-header">
+              <span>Stock Alerts & Notifications</span>
+              <i class="fa-solid fa-triangle-exclamation" style="color:var(--status-low-stock);"></i>
+            </div>
+            <div class="notification-list" id="notification-list">
+              <!-- Loaded via JavaScript -->
+            </div>
+          </div>
+        </div>
+
+        <!-- User Profile & Logout -->
+        <div class="user-profile-badge" id="user-profile-badge">
+          <div class="user-avatar">A</div>
+          <div class="user-info">
+            <span class="user-name">Shop Admin</span>
+            <span class="user-role">Administrator</span>
+          </div>
+          <button id="btn-logout" class="btn btn-secondary btn-sm" style="border:none; padding:0.2rem 0.4rem;" title="Logout">
+            <i class="fa-solid fa-right-from-bracket"></i>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Workspace Tab Panes -->
+    <main class="main-content">
+
+      <!-- 1. DASHBOARD TAB -->
+      <section id="tab-dashboard" class="tab-pane active">
+        <div class="page-header">
+          <div>
+            <h1 class="page-title">Grocery Shop Dashboard</h1>
+            <p class="page-subtitle">Real-time inventory metrics, stock alerts & category analytics</p>
+          </div>
+          <div style="display:flex; gap:0.75rem;">
+            <button class="btn btn-primary" onclick="App.openAddProductModal()">
+              <i class="fa-solid fa-plus"></i> Add Product
+            </button>
+            <button class="btn btn-secondary" onclick="App.openAddCategoryModal()">
+              <i class="fa-solid fa-tag"></i> Add Category
+            </button>
+          </div>
+        </div>
+
+        <!-- Stats KPI Grid -->
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-icon green"><i class="fa-solid fa-box-open"></i></div>
+            <div class="stat-info">
+              <span class="stat-value" id="stat-total-products">0</span>
+              <span class="stat-label">Total Products</span>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-icon blue"><i class="fa-solid fa-layer-group"></i></div>
+            <div class="stat-info">
+              <span class="stat-value" id="stat-total-categories">0</span>
+              <span class="stat-label">Total Categories</span>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-icon purple"><i class="fa-solid fa-cubes"></i></div>
+            <div class="stat-info">
+              <span class="stat-value" id="stat-total-stock">0</span>
+              <span class="stat-label">Total Stock Units</span>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-icon amber"><i class="fa-solid fa-circle-exclamation"></i></div>
+            <div class="stat-info">
+              <span class="stat-value" id="stat-low-stock">0</span>
+              <span class="stat-label">Low Stock Products</span>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-icon red"><i class="fa-solid fa-triangle-exclamation"></i></div>
+            <div class="stat-info">
+              <span class="stat-value" id="stat-out-stock">0</span>
+              <span class="stat-label">Out of Stock</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Category Wise Stock Summary Grid -->
+        <h2 style="font-size: 1.1rem; font-weight: 700; margin-bottom: 0.8rem;">Category Inventory Summary</h2>
+        <div class="category-summary-grid" id="category-summary-grid">
+          <!-- Populated dynamically via JS for Rice, Oil, Biscuits, Beverages, Vegetables, Fruits, Dairy, Snacks, Cleaning, Personal Care -->
+        </div>
+
+        <!-- Dashboard Charts Grid -->
+        <div class="charts-grid">
+          <div class="chart-card">
+            <div class="chart-card-header">
+              <h3 class="chart-card-title">Category Distribution</h3>
+              <i class="fa-solid fa-chart-pie" style="color:var(--primary-color);"></i>
+            </div>
+            <div class="chart-wrapper">
+              <canvas id="categoryPieChart"></canvas>
+            </div>
+          </div>
+
+          <div class="chart-card">
+            <div class="chart-card-header">
+              <h3 class="chart-card-title">Stock Levels vs Threshold</h3>
+              <i class="fa-solid fa-chart-bar" style="color:var(--primary-color);"></i>
+            </div>
+            <div class="chart-wrapper">
+              <canvas id="stockBarChart"></canvas>
+            </div>
+          </div>
+
+          <div class="chart-card" style="grid-column: 1 / -1;">
+            <div class="chart-card-header">
+              <h3 class="chart-card-title">Monthly Stock Movement & Sales Trend</h3>
+              <i class="fa-solid fa-chart-line" style="color:var(--primary-color);"></i>
+            </div>
+            <div class="chart-wrapper">
+              <canvas id="movementLineChart"></canvas>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 2. STOCK CALCULATOR TAB -->
+      <section id="tab-calculator" class="tab-pane">
+        <div class="page-header">
+          <div>
+            <h1 class="page-title">Interactive Stock Calculator</h1>
+            <p class="page-subtitle">Automatic stock calculation, availability status, and percentage tracker</p>
+          </div>
+        </div>
+
+        <div class="calculator-card">
+          <div class="calc-grid">
+            <div>
+              <div class="form-group">
+                <label for="calc-product-select">Select Grocery Product</label>
+                <select id="calc-product-select" class="form-control">
+                  <option value="">-- Select Product --</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="calc-action-type">Operation</label>
+                <select id="calc-action-type" class="form-control">
+                  <option value="sell">Record Sale (Deduct Stock)</option>
+                  <option value="add">Add Restock (Increase Stock)</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="calc-sold-qty">Quantity Sold / Added (<span id="calc-unit-label">Unit</span>)</label>
+                <input type="number" id="calc-sold-qty" class="form-control" placeholder="e.g. 25" min="0.1" step="any">
+              </div>
+
+              <button class="btn btn-primary" id="calc-apply-btn" style="width: 100%; margin-top: 1rem;">
+                <i class="fa-solid fa-calculator"></i> Apply Stock Update & Save
+              </button>
+            </div>
+
+            <div class="calc-results-panel">
+              <div>
+                <h3 style="font-size: 1.1rem; font-weight: 700; margin-bottom: 1rem; color: var(--primary-color);">
+                  <i class="fa-solid fa-gauge-high"></i> Live Stock Calculation
+                </h3>
+
+                <div class="calc-summary-row">
+                  <span class="calc-summary-label">Initial Stock:</span>
+                  <span class="calc-summary-val" id="calc-initial-stock">-</span>
+                </div>
+
+                <div class="calc-summary-row">
+                  <span class="calc-summary-label">Measurement Unit:</span>
+                  <span class="calc-summary-val" id="calc-unit-display">-</span>
+                </div>
+
+                <div class="calc-summary-row">
+                  <span class="calc-summary-label">Calculated Remaining Stock:</span>
+                  <span class="calc-summary-val" id="calc-remaining-stock" style="color:var(--primary-color); font-size:1.3rem;">-</span>
+                </div>
+
+                <div class="calc-progress-box">
+                  <div style="display:flex; justify-content:space-between; font-size:0.85rem; font-weight:600;">
+                    <span>Stock Capacity Availability:</span>
+                    <span id="calc-percentage-text">0%</span>
+                  </div>
+                  <div class="progress-bar-bg">
+                    <div class="progress-bar-fill" id="calc-progress-fill"></div>
+                  </div>
+                </div>
+              </div>
+
+              <div style="display:flex; align-items:center; justify-content:space-between; margin-top:1.5rem;">
+                <span style="font-size:0.88rem; font-weight:600;">Stock Availability Status:</span>
+                <span class="badge" id="calc-status-badge">Select Product</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Calculator Examples Banner -->
+        <div class="chart-card">
+          <h4 style="font-weight: 700; margin-bottom: 0.5rem;"><i class="fa-solid fa-lightbulb" style="color:#f59e0b;"></i> Stock Calculator Formula Example</h4>
+          <p style="font-size: 0.88rem; color: var(--text-secondary);">
+            <strong>Example Calculation:</strong> If initial <em>Royal Basmati Rice</em> stock is <strong>150 kg</strong> and shop owner enters <strong>25 kg sold</strong>, the calculator immediately updates: <br>
+            <code>Remaining Stock = 150 kg - 25 kg = 125 kg (83% capacity, Stock Available)</code>
+          </p>
+        </div>
+      </section>
+
+      <!-- 3. POS & SALES TAB -->
+      <section id="tab-pos" class="tab-pane">
+        <div class="page-header">
+          <div>
+            <h1 class="page-title">POS / Sales Checkout Counter</h1>
+            <p class="page-subtitle">Instant grocery sales, cart checkout & real-time inventory deduction</p>
+          </div>
+        </div>
+
+        <div class="pos-layout">
+          <div>
+            <div style="margin-bottom: 1rem;">
+              <input type="text" id="pos-search-input" class="form-control" placeholder="🔍 Search product name, barcode or category...">
+            </div>
+            <div class="pos-products-grid" id="pos-products-grid">
+              <!-- Loaded dynamically via JS -->
+            </div>
+          </div>
+
+          <div class="pos-cart-panel">
+            <h3 style="font-weight: 700; font-size: 1.1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem;">
+              <i class="fa-solid fa-cart-shopping" style="color:var(--primary-color);"></i> Current Sale Cart
+            </h3>
+            
+            <div class="pos-cart-items" id="pos-cart-items">
+              <!-- Loaded via JavaScript -->
+            </div>
+
+            <div style="border-top: 1px solid var(--border-color); padding-top: 0.85rem;">
+              <div class="calc-summary-row">
+                <span class="calc-summary-label">Subtotal:</span>
+                <span class="calc-summary-val" id="pos-subtotal">₹0.00</span>
+              </div>
+              <div class="calc-summary-row">
+                <span class="calc-summary-label">Tax (5%):</span>
+                <span class="calc-summary-val" id="pos-tax">₹0.00</span>
+              </div>
+              <div class="calc-summary-row" style="border-bottom:none;">
+                <span class="calc-summary-label" style="font-weight:700; color:var(--text-primary);">Grand Total:</span>
+                <span class="calc-summary-val" id="pos-total" style="color:var(--primary-color); font-size:1.3rem;">₹0.00</span>
+              </div>
+
+              <div style="display:flex; gap:0.5rem; margin-top:1rem;">
+                <button class="btn btn-secondary" id="pos-clear-btn" style="flex:1;">Clear</button>
+                <button class="btn btn-primary" id="pos-checkout-btn" style="flex:2;">
+                  <i class="fa-solid fa-check"></i> Complete Sale
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 4. PRODUCTS MANAGEMENT TAB -->
+      <section id="tab-products" class="tab-pane">
+        <div class="page-header">
+          <div>
+            <h1 class="page-title">Product Inventory Management</h1>
+            <p class="page-subtitle">Add, edit, track barcodes, expiry dates, purchase & selling prices</p>
+          </div>
+          <button class="btn btn-primary" onclick="App.openAddProductModal()">
+            <i class="fa-solid fa-plus"></i> Add New Product
+          </button>
+        </div>
+
+        <div class="table-container">
+          <div class="table-toolbar">
+            <div class="table-search-box">
+              <i class="fa-solid fa-magnifying-glass"></i>
+              <input type="text" id="product-table-search" placeholder="Search product name, brand, barcode...">
+            </div>
+
+            <div style="display:flex; gap:0.75rem;">
+              <select id="product-category-filter" class="form-control" style="width: auto;">
+                <option value="">All Categories</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="table-responsive">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Product ID</th>
+                  <th>Product Name & Barcode</th>
+                  <th>Category</th>
+                  <th>Brand</th>
+                  <th>Purchase / Selling Price</th>
+                  <th>Quantity & Unit</th>
+                  <th>Expiry Date</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="product-table-body">
+                <!-- Loaded via JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- 5. CATEGORIES TAB -->
+      <section id="tab-categories" class="tab-pane">
+        <div class="page-header">
+          <div>
+            <h1 class="page-title">Category Management</h1>
+            <p class="page-subtitle">Manage grocery product categories (Rice, Oil, Biscuits, Dairy, etc.)</p>
+          </div>
+          <button class="btn btn-primary" onclick="App.openAddCategoryModal()">
+            <i class="fa-solid fa-plus"></i> Add Category
+          </button>
+        </div>
+
+        <div class="table-container">
+          <div class="table-responsive">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Category ID</th>
+                  <th>Category Name</th>
+                  <th>Description</th>
+                  <th>Total Linked Products</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="category-table-body">
+                <!-- Loaded via JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- 6. SUPPLIERS TAB -->
+      <section id="tab-suppliers" class="tab-pane">
+        <div class="page-header">
+          <div>
+            <h1 class="page-title">Supplier Management</h1>
+            <p class="page-subtitle">Track wholesale suppliers, contact information and deliveries</p>
+          </div>
+          <button class="btn btn-primary" onclick="App.openAddSupplierModal()">
+            <i class="fa-solid fa-plus"></i> Add Supplier
+          </button>
+        </div>
+
+        <div class="table-container">
+          <div class="table-responsive">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Supplier ID</th>
+                  <th>Supplier Name</th>
+                  <th>Phone Number</th>
+                  <th>Email</th>
+                  <th>Address</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="supplier-table-body">
+                <!-- Loaded via JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- 7. SALES HISTORY TAB -->
+      <section id="tab-history" class="tab-pane">
+        <div class="page-header">
+          <div>
+            <h1 class="page-title">Sales & Stock History</h1>
+            <p class="page-subtitle">Audit trail of completed sales and inventory deductions</p>
+          </div>
+        </div>
+
+        <div class="table-container">
+          <div class="table-responsive">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Transaction ID</th>
+                  <th>Product Name</th>
+                  <th>Category</th>
+                  <th>Qty Sold</th>
+                  <th>Unit Price</th>
+                  <th>Total Price</th>
+                  <th>Date & Time</th>
+                </tr>
+              </thead>
+              <tbody id="sales-history-table-body">
+                <!-- Loaded via JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- 8. REPORTS & EXPORT TAB -->
+      <section id="tab-reports" class="tab-pane">
+        <div class="page-header">
+          <div>
+            <h1 class="page-title">Inventory Reports & Export</h1>
+            <p class="page-subtitle">Generate Daily, Weekly, Monthly, Category-wise, Low Stock & Out of Stock reports</p>
+          </div>
+          <div style="display:flex; gap:0.75rem;">
+            <button class="btn btn-secondary" id="btn-export-excel">
+              <i class="fa-solid fa-file-excel" style="color:#16a34a;"></i> Export to Excel (.xlsx)
+            </button>
+            <button class="btn btn-primary" id="btn-export-pdf">
+              <i class="fa-solid fa-file-pdf"></i> Export / Print PDF
+            </button>
+          </div>
+        </div>
+
+        <div class="chart-card" style="margin-bottom: 1.5rem;">
+          <div style="display:flex; align-items:center; gap:1rem; flex-wrap:wrap;">
+            <div class="form-group" style="margin-bottom:0; flex:1; min-width:240px;">
+              <label for="report-type-select">Select Report Type</label>
+              <select id="report-type-select" class="form-control">
+                <option value="daily">Daily Stock Movement Report</option>
+                <option value="weekly">Weekly Report</option>
+                <option value="monthly">Monthly Report</option>
+                <option value="category">Category-wise Stock Report</option>
+                <option value="low_stock">Low Stock Warning Report</option>
+                <option value="out_of_stock">Out of Stock Alert Report</option>
+              </select>
+            </div>
+
+            <button class="btn btn-primary" id="btn-generate-report" style="margin-top:1.5rem;">
+              <i class="fa-solid fa-rotate-right"></i> Generate Report
+            </button>
+          </div>
+        </div>
+
+        <div class="table-container" id="report-table-container">
+          <div style="padding:1rem 1.25rem; font-weight:700; font-size:1.1rem; border-bottom:1px solid var(--border-color);" id="report-display-title">
+            Daily Stock Report
+          </div>
+          <div class="table-responsive">
+            <table class="data-table">
+              <thead id="report-table-head">
+                <!-- Headers via JS -->
+              </thead>
+              <tbody id="report-table-body">
+                <!-- Rows via JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- 9. BACKUP & RESTORE TAB -->
+      <section id="tab-backup" class="tab-pane">
+        <div class="page-header">
+          <div>
+            <h1 class="page-title">Backup & Restore Database</h1>
+            <p class="page-subtitle">Export full inventory data to JSON or restore from a saved file</p>
+          </div>
+        </div>
+
+        <div class="calc-grid">
+          <div class="chart-card">
+            <h3 style="font-weight: 700; margin-bottom: 0.8rem;"><i class="fa-solid fa-download" style="color:var(--primary-color);"></i> Download Database Backup</h3>
+            <p style="font-size:0.88rem; color:var(--text-secondary); margin-bottom:1.2rem;">
+              Create an instant JSON backup of all products, categories, suppliers, and sales history.
+            </p>
+            <a href="/api/backup" download="grocery_inventory_backup.json" class="btn btn-primary">
+              <i class="fa-solid fa-file-export"></i> Download JSON Backup
+            </a>
+          </div>
+
+          <div class="chart-card">
+            <h3 style="font-weight: 700; margin-bottom: 0.8rem;"><i class="fa-solid fa-upload" style="color:var(--primary-color);"></i> Restore Database</h3>
+            <p style="font-size:0.88rem; color:var(--text-secondary); margin-bottom:1.2rem;">
+              Select a previously downloaded <code>.json</code> backup file to restore system state.
+            </p>
+            <input type="file" id="restore-file-input" accept=".json" style="display:none;">
+            <button class="btn btn-secondary" onclick="document.getElementById('restore-file-input').click()">
+              <i class="fa-solid fa-file-import"></i> Choose Backup JSON File
+            </button>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- Product Modal -->
+  <div class="modal-overlay" id="product-modal">
+    <div class="modal-container">
+      <div class="modal-header">
+        <h3 class="modal-title" id="product-modal-title">Add New Grocery Product</h3>
+        <button class="modal-close-btn" onclick="App.closeModal('product-modal')">&times;</button>
+      </div>
+      <form id="product-form">
+        <div class="modal-body">
+          <input type="hidden" id="product-edit-id">
+
+          <div class="form-group">
+            <label>Product Name *</label>
+            <input type="text" id="product-form-name" class="form-control" required placeholder="e.g. Royal Basmati Rice 5kg">
+          </div>
+
+          <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1rem;">
+            <div class="form-group">
+              <label>Category *</label>
+              <select id="product-form-category" class="form-control" required></select>
+            </div>
+            <div class="form-group">
+              <label>Brand</label>
+              <input type="text" id="product-form-brand" class="form-control" placeholder="e.g. Royal Agro">
+            </div>
+          </div>
+
+          <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1rem;">
+            <div class="form-group">
+              <label>Purchase Price (₹)</label>
+              <input type="number" step="0.01" id="product-form-purchase" class="form-control" required placeholder="120.00">
+            </div>
+            <div class="form-group">
+              <label>Selling Price (₹)</label>
+              <input type="number" step="0.01" id="product-form-selling" class="form-control" required placeholder="160.00">
+            </div>
+          </div>
+
+          <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:1rem;">
+            <div class="form-group">
+              <label>Quantity *</label>
+              <input type="number" step="any" id="product-form-qty" class="form-control" required placeholder="150">
+            </div>
+            <div class="form-group">
+              <label>Min Stock Warning</label>
+              <input type="number" id="product-form-min-stock" class="form-control" value="10">
+            </div>
+            <div class="form-group">
+              <label>Unit *</label>
+              <select id="product-form-unit" class="form-control">
+                <option value="Kg">Kg</option>
+                <option value="Gram">Gram</option>
+                <option value="Litre">Litre</option>
+                <option value="ml">ml</option>
+                <option value="Packet">Packet</option>
+                <option value="Bottle">Bottle</option>
+                <option value="Piece">Piece</option>
+                <option value="Tetra Pack">Tetra Pack</option>
+              </select>
+            </div>
+          </div>
+
+          <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1rem;">
+            <div class="form-group">
+              <label>Supplier Name</label>
+              <select id="product-form-supplier" class="form-control"></select>
+            </div>
+            <div class="form-group">
+              <label>Expiry Date</label>
+              <input type="date" id="product-form-expiry" class="form-control">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Barcode</label>
+            <input type="text" id="product-form-barcode" class="form-control" placeholder="Auto-generated if empty">
+          </div>
+
+          <div class="form-group">
+            <label>Product Image URL</label>
+            <input type="text" id="product-form-image" class="form-control" placeholder="https://images.unsplash.com/...">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="App.closeModal('product-modal')">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Product</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Category Modal -->
+  <div class="modal-overlay" id="category-modal">
+    <div class="modal-container">
+      <div class="modal-header">
+        <h3 class="modal-title">Add / Edit Category</h3>
+        <button class="modal-close-btn" onclick="App.closeModal('category-modal')">&times;</button>
+      </div>
+      <form id="category-form">
+        <div class="modal-body">
+          <input type="hidden" id="category-edit-id">
+          <div class="form-group">
+            <label>Category Name *</label>
+            <input type="text" id="category-form-name" class="form-control" required placeholder="e.g. Dairy">
+          </div>
+          <div class="form-group">
+            <label>Description</label>
+            <textarea id="category-form-desc" class="form-control" rows="3" placeholder="Category details..."></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="App.closeModal('category-modal')">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Category</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Supplier Modal -->
+  <div class="modal-overlay" id="supplier-modal">
+    <div class="modal-container">
+      <div class="modal-header">
+        <h3 class="modal-title">Add New Supplier</h3>
+        <button class="modal-close-btn" onclick="App.closeModal('supplier-modal')">&times;</button>
+      </div>
+      <form id="supplier-form">
+        <div class="modal-body">
+          <div class="form-group">
+            <label>Supplier Name *</label>
+            <input type="text" id="supplier-form-name" class="form-control" required>
+          </div>
+          <div class="form-group">
+            <label>Phone</label>
+            <input type="text" id="supplier-form-phone" class="form-control">
+          </div>
+          <div class="form-group">
+            <label>Email</label>
+            <input type="email" id="supplier-form-email" class="form-control">
+          </div>
+          <div class="form-group">
+            <label>Address</label>
+            <input type="text" id="supplier-form-address" class="form-control">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="App.closeModal('supplier-modal')">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Supplier</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Admin Login Modal Overlay -->
+  <div class="auth-wrapper" id="auth-overlay" style="display: none;">
+    <div class="auth-card">
+      <div style="font-size:2.5rem; color:var(--primary-color); margin-bottom:0.5rem;">
+        <i class="fa-solid fa-basket-shopping"></i>
+      </div>
+      <h2 style="font-weight:800; font-size:1.4rem; margin-bottom:0.2rem;">Grocery Shop Admin</h2>
+      <p style="font-size:0.85rem; color:var(--text-secondary); margin-bottom:1.5rem;">Sign in to access Inventory Calculator</p>
+
+      <form id="auth-form">
+        <div class="form-group" style="text-align:left;">
+          <label>Username</label>
+          <input type="text" id="auth-username" class="form-control" value="admin" required>
+        </div>
+        <div class="form-group" style="text-align:left; margin-bottom:1.5rem;">
+          <label>Password</label>
+          <input type="password" id="auth-password" class="form-control" value="password123" required>
+        </div>
+        <button type="submit" class="btn btn-primary" style="width:100%; justify-content:center;">
+          <i class="fa-solid fa-right-to-bracket"></i> Sign In to Dashboard
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div id="toast-container"></div>
+
+  <!-- Application Scripts -->
+  <script src="js/db.js"></script>
+  <script src="js/calculator.js"></script>
+  <script src="js/charts.js"></script>
+  <script src="js/reports.js"></script>
+  <script src="js/pos.js"></script>
+  <script src="js/barcode.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
