@@ -6,12 +6,16 @@ const InventoryReports = (function () {
   let currentReportData = [];
   let currentReportTitle = 'Daily Stock Report';
 
+  function formatINR(amount) {
+    const num = Number(amount) || 0;
+    return '\u20B9' + num.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
   function init() {
     bindEvents();
   }
 
   function bindEvents() {
-    const reportTypeSelect = document.getElementById('report-type-select');
     const generateBtn = document.getElementById('btn-generate-report');
     const exportExcelBtn = document.getElementById('btn-export-excel');
     const exportPdfBtn = document.getElementById('btn-export-pdf');
@@ -29,6 +33,17 @@ const InventoryReports = (function () {
     }
   }
 
+  function isSameDay(d1, d2) {
+    return d1.getFullYear() === d2.getFullYear() &&
+      d1.getMonth() === d2.getMonth() &&
+      d1.getDate() === d2.getDate();
+  }
+
+  function isWithinDays(d1, days) {
+    const diff = Date.now() - d1.getTime();
+    return diff <= (days * 86400000);
+  }
+
   async function generateReport() {
     const typeSelect = document.getElementById('report-type-select');
     const type = typeSelect ? typeSelect.value : 'daily';
@@ -42,100 +57,105 @@ const InventoryReports = (function () {
 
     switch (type) {
       case 'daily':
-        currentReportTitle = `Daily Inventory & Stock Movement Report (${now.toLocaleDateString()})`;
+        currentReportTitle = `Daily Inventory & Stock Movement Report (${now.toLocaleDateString('en-IN')})`;
         filtered = products.map(p => {
           const todaySales = sales
             .filter(s => s.product_id == p.id && isSameDay(new Date(s.date), now))
             .reduce((sum, s) => sum + s.quantity_sold, 0);
           return {
-            ID: p.id,
+            ID: `#${p.id}`,
             Product: p.product_name,
-            Category: p.category_name,
-            Stock: p.quantity,
-            Unit: p.unit,
-            SoldToday: todaySales,
+            Category: p.category_name || 'N/A',
+            CurrentStock: `${p.quantity} ${p.unit}`,
+            SoldToday: `${todaySales} ${p.unit}`,
+            StockValuation: formatINR(p.quantity * p.selling_price),
             Status: p.quantity === 0 ? 'Out of Stock' : (p.quantity <= p.min_stock_level ? 'Low Stock' : 'In Stock')
           };
         });
         break;
 
       case 'weekly':
-        currentReportTitle = 'Weekly Stock Summary Report';
+        currentReportTitle = 'Weekly Inventory Valuation & Sales Summary';
         filtered = products.map(p => {
           const weekSales = sales
             .filter(s => s.product_id == p.id && isWithinDays(new Date(s.date), 7))
             .reduce((sum, s) => sum + s.quantity_sold, 0);
           return {
-            ID: p.id,
+            ID: `#${p.id}`,
             Product: p.product_name,
-            Category: p.category_name,
-            Stock: p.quantity,
-            Unit: p.unit,
-            SoldLast7Days: weekSales,
-            Valuation: `₹${(p.quantity * p.selling_price).toFixed(2)}`
+            Category: p.category_name || 'N/A',
+            Stock: `${p.quantity} ${p.unit}`,
+            SoldLast7Days: `${weekSales} ${p.unit}`,
+            TotalValuation: formatINR(p.quantity * p.selling_price)
           };
         });
         break;
 
       case 'monthly':
-        currentReportTitle = 'Monthly Inventory Valuation Report';
+        currentReportTitle = 'Monthly Inventory & Financial Valuation Report';
         filtered = products.map(p => ({
-          ID: p.id,
+          ID: `#${p.id}`,
           Product: p.product_name,
-          Category: p.category_name,
-          PurchasePrice: `₹${p.purchase_price.toFixed(2)}`,
-          SellingPrice: `₹${p.selling_price.toFixed(2)}`,
+          Category: p.category_name || 'N/A',
+          PurchasePrice: formatINR(p.purchase_price),
+          SellingPrice: formatINR(p.selling_price),
           StockQty: `${p.quantity} ${p.unit}`,
-          TotalValue: `₹${(p.quantity * p.purchase_price).toFixed(2)}`,
-          PotentialRevenue: `₹${(p.quantity * p.selling_price).toFixed(2)}`
+          TotalCostValue: formatINR(p.quantity * p.purchase_price),
+          PotentialRevenue: formatINR(p.quantity * p.selling_price),
+          ExpectedProfit: formatINR(p.quantity * (p.selling_price - p.purchase_price))
         }));
         break;
 
       case 'category':
-        currentReportTitle = 'Category-wise Stock Breakdown';
+        currentReportTitle = 'Category-wise Inventory & Stock Breakdown';
         const categoryMap = {};
         categories.forEach(c => {
-          categoryMap[c.category_name] = { count: 0, stock: 0, items: [] };
+          categoryMap[c.category_name] = { count: 0, stock: 0, costVal: 0, sellVal: 0 };
         });
         products.forEach(p => {
           const catName = p.category_name || 'General';
-          if (!categoryMap[catName]) categoryMap[catName] = { count: 0, stock: 0, items: [] };
+          if (!categoryMap[catName]) categoryMap[catName] = { count: 0, stock: 0, costVal: 0, sellVal: 0 };
           categoryMap[catName].count += 1;
           categoryMap[catName].stock += p.quantity;
+          categoryMap[catName].costVal += (p.quantity * p.purchase_price);
+          categoryMap[catName].sellVal += (p.quantity * p.selling_price);
         });
 
         filtered = Object.keys(categoryMap).map(cName => ({
           Category: cName,
           TotalProducts: categoryMap[cName].count,
-          TotalStockUnits: categoryMap[cName].stock
+          TotalStockUnits: `${Math.round(categoryMap[cName].stock)} units`,
+          TotalCostValuation: formatINR(categoryMap[cName].costVal),
+          TotalSellingValuation: formatINR(categoryMap[cName].sellVal)
         }));
         break;
 
       case 'low_stock':
-        currentReportTitle = 'Low Stock Warning Report';
+        currentReportTitle = 'Low Stock Warning & Reorder Report';
         filtered = products
           .filter(p => p.quantity > 0 && p.quantity <= p.min_stock_level)
           .map(p => ({
-            ID: p.id,
+            ID: `#${p.id}`,
             Product: p.product_name,
-            Category: p.category_name,
+            Category: p.category_name || 'N/A',
             CurrentStock: `${p.quantity} ${p.unit}`,
             MinThreshold: `${p.min_stock_level} ${p.unit}`,
-            Supplier: p.supplier
+            Supplier: p.supplier || 'N/A',
+            Action: 'Restock Required'
           }));
         break;
 
       case 'out_of_stock':
-        currentReportTitle = 'Out of Stock Alert Report';
+        currentReportTitle = 'Out of Stock Critical Alert Report';
         filtered = products
           .filter(p => p.quantity === 0)
           .map(p => ({
-            ID: p.id,
+            ID: `#${p.id}`,
             Product: p.product_name,
-            Category: p.category_name,
+            Category: p.category_name || 'N/A',
             Status: 'OUT OF STOCK (0)',
-            Supplier: p.supplier,
-            ActionNeeded: 'Reorder Immediately'
+            Supplier: p.supplier || 'N/A',
+            Urgency: 'CRITICAL - REORDER IMMEDIATELY'
           }));
         break;
     }
@@ -147,23 +167,21 @@ const InventoryReports = (function () {
 
   function renderReportTable(data) {
     const titleEl = document.getElementById('report-display-title');
-    if (titleEl) titleEl.textContent = currentReportTitle;
-
-    const tbody = document.getElementById('report-table-body');
     const thead = document.getElementById('report-table-head');
-    if (!tbody || !thead) return;
+    const tbody = document.getElementById('report-table-body');
+
+    if (titleEl) titleEl.textContent = currentReportTitle;
+    if (!thead || !tbody) return;
 
     if (!data || data.length === 0) {
-      thead.innerHTML = '<tr><th>No Data</th></tr>';
-      tbody.innerHTML = '<tr><td class="text-center">No records match the report criteria</td></tr>';
+      thead.innerHTML = '<tr><th>Status</th></tr>';
+      tbody.innerHTML = '<tr><td style="text-align: center; padding: 2rem; color: var(--text-muted);">No records found for this report.</td></tr>';
       return;
     }
 
-    // Generate table headers
     const keys = Object.keys(data[0]);
-    thead.innerHTML = `<tr>${keys.map(k => `<th>${k.replace(/([A-Z])/g, ' $1')}</th>`).join('')}</tr>`;
+    thead.innerHTML = `<tr>${keys.map(k => `<th>${k.replace(/([A-Z])/g, ' $1').trim()}</th>`).join('')}</tr>`;
 
-    // Generate rows
     tbody.innerHTML = data.map(row => {
       return `<tr>${keys.map(k => `<td>${row[k]}</td>`).join('')}</tr>`;
     }).join('');
@@ -171,74 +189,63 @@ const InventoryReports = (function () {
 
   function exportToExcel() {
     if (!currentReportData || currentReportData.length === 0) {
-      App.showToast('No report data available to export', 'warning');
+      App.showToast('Please generate a report first before exporting!', 'warning');
       return;
     }
 
     try {
-      if (typeof XLSX !== 'undefined') {
-        const worksheet = XLSX.utils.json_to_sheet(currentReportData);
-        const workbook = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(workbook, worksheet, 'Report');
-        const filename = `${currentReportTitle.replace(/[^a-zA-Z0-9]/g, '_')}.xlsx`;
-        XLSX.writeFile(workbook, filename);
-        App.showToast('Excel report downloaded successfully!', 'success');
-      } else {
-        App.showToast('SheetJS Excel library loading...', 'info');
-      }
+      const worksheet = XLSX.utils.json_to_sheet(currentReportData);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'Stock Report');
+
+      const filename = `${currentReportTitle.replace(/[^a-zA-Z0-9]/g, '_')}.xlsx`;
+      XLSX.writeFile(workbook, filename);
+      App.showToast(`Exported report to Excel: ${filename}`, 'success');
     } catch (err) {
-      App.showToast('Failed to export Excel: ' + err.message, 'error');
+      console.error('Excel Export Error:', err);
+      App.showToast('Failed to export to Excel', 'error');
     }
   }
 
   function exportToPDF() {
     if (!currentReportData || currentReportData.length === 0) {
-      App.showToast('No report data available to export', 'warning');
+      App.showToast('Please generate a report first before printing!', 'warning');
       return;
     }
 
-    // Print styled report window
-    const printWin = window.open('', '_blank');
-    const tableHTML = document.getElementById('report-table-container').innerHTML;
+    const printWindow = window.open('', '_blank');
+    const tableHTML = document.getElementById('report-table-container').outerHTML;
 
-    printWin.document.write(`
+    printWindow.document.write(`
       <!DOCTYPE html>
       <html>
       <head>
         <title>${currentReportTitle}</title>
         <style>
-          body { font-family: sans-serif; padding: 20px; color: #1e293b; }
-          h2 { color: #16a34a; margin-bottom: 5px; }
-          p { color: #64748b; font-size: 14px; margin-top: 0; }
-          table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 13px; }
+          body { font-family: 'Inter', sans-serif; padding: 20px; color: #1e293b; }
+          h2 { color: #16a34a; font-size: 20px; margin-bottom: 5px; }
+          p { color: #64748b; font-size: 13px; margin-bottom: 20px; }
+          table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 12px; }
           th, td { border: 1px solid #cbd5e1; padding: 8px 12px; text-align: left; }
-          th { background-color: #f1f5f9; font-weight: bold; }
-          .footer { margin-top: 30px; font-size: 11px; text-align: center; color: #94a3b8; }
+          th { background-color: #f1f5f9; font-weight: 700; color: #0f172a; }
+          tr:nth-child(even) { background-color: #f8fafc; }
+          .footer { margin-top: 30px; font-size: 11px; text-align: center; color: #94a3b8; border-top: 1px solid #e2e8f0; padding-top: 10px; }
         </style>
       </head>
       <body>
-        <h2>Grocery Shop Inventory Calculator</h2>
-        <p>${currentReportTitle}</p>
+        <h2>Fresh Supermart - Official Inventory Report</h2>
+        <p>Report: <strong>${currentReportTitle}</strong> | Generated on: ${new Date().toLocaleString('en-IN')}</p>
         ${tableHTML}
-        <div class="footer">Generated on ${new Date().toLocaleString()} | Official Inventory Record</div>
-        <script>
-          window.onload = function() { window.print(); window.close(); }
-        </script>
+        <div class="footer">Confidential &copy; Fresh Supermart Grocery Inventory Management System</div>
       </body>
       </html>
     `);
-    printWin.document.close();
-  }
 
-  function isSameDay(d1, d2) {
-    return d1.getFullYear() === d2.getFullYear() &&
-      d1.getMonth() === d2.getMonth() &&
-      d1.getDate() === d2.getDate();
-  }
-
-  function isWithinDays(d, days) {
-    const diff = (new Date().getTime() - d.getTime()) / (1000 * 3600 * 24);
-    return diff >= 0 && diff <= days;
+    printWindow.document.close();
+    printWindow.focus();
+    setTimeout(() => {
+      printWindow.print();
+    }, 500);
   }
 
   return {

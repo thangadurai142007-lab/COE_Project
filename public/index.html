@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Grocery Shop Inventory Calculator & Management</title>
+  <title>Fresh Supermart - Grocery Inventory Management & POS (INR ₹)</title>
 
   <!-- Google Fonts & Font Awesome Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -23,8 +23,8 @@
         <i class="fa-solid fa-basket-shopping"></i>
       </div>
       <div>
-        <div class="sidebar-brand-title">Grocery POS</div>
-        <div class="sidebar-brand-subtitle">Inventory Calculator</div>
+        <div class="sidebar-brand-title">Fresh Supermart</div>
+        <div class="sidebar-brand-subtitle">Inventory & POS (INR ₹)</div>
       </div>
     </div>
 
@@ -42,7 +42,7 @@
 
       <div class="nav-section-label">Inventory Management</div>
       <a href="#" class="nav-item" data-tab="tab-products">
-        <i class="fa-solid fa-boxes-stacked"></i> Products
+        <i class="fa-solid fa-boxes-stacked"></i> Products Inventory
       </a>
       <a href="#" class="nav-item" data-tab="tab-categories">
         <i class="fa-solid fa-tags"></i> Categories
@@ -65,7 +65,7 @@
 
     <div class="sidebar-footer">
       <div style="font-size:0.75rem; color:var(--text-muted); text-align:center;">
-        Grocery Calculator v1.0 &copy; 2026
+        Fresh Supermart v2.0 &copy; 2026<br><span style="color:var(--primary-color); font-weight:600;">INR ₹ Currency Ready</span>
       </div>
     </div>
   </aside>
@@ -81,11 +81,16 @@
         </button>
         <div class="search-box-header">
           <i class="fa-solid fa-magnifying-glass"></i>
-          <input type="text" id="main-search-input" placeholder="Search product, category, barcode...">
+          <input type="text" id="main-search-input" placeholder="Search product name, category, barcode...">
         </div>
       </div>
 
       <div class="navbar-right">
+        <!-- Currency Badge Indicator -->
+        <div class="currency-indicator-badge">
+          <i class="fa-solid fa-indian-rupee-sign"></i> <span>INR (₹)</span>
+        </div>
+
         <!-- Theme Toggle -->
         <button class="theme-toggle-btn" id="theme-toggle-btn" title="Toggle Light/Dark Theme">
           <i class="fa-solid fa-moon"></i>
@@ -116,9 +121,6 @@
             <span class="user-name">Shop Admin</span>
             <span class="user-role">Administrator</span>
           </div>
-          <button id="btn-logout" class="btn btn-secondary btn-sm" style="border:none; padding:0.2rem 0.4rem;" title="Logout">
-            <i class="fa-solid fa-right-from-bracket"></i>
-          </button>
         </div>
       </div>
     </header>
@@ -131,7 +133,7 @@
         <div class="page-header">
           <div>
             <h1 class="page-title">Grocery Shop Dashboard</h1>
-            <p class="page-subtitle">Real-time inventory metrics, stock alerts & category analytics</p>
+            <p class="page-subtitle">Real-time inventory metrics, valuation in INR (₹), stock alerts & category analytics</p>
           </div>
           <div style="display:flex; gap:0.75rem;">
             <button class="btn btn-primary" onclick="App.openAddProductModal()">
@@ -170,10 +172,26 @@
           </div>
 
           <div class="stat-card">
+            <div class="stat-icon emerald"><i class="fa-solid fa-indian-rupee-sign"></i></div>
+            <div class="stat-info">
+              <span class="stat-value" id="stat-total-valuation">₹0.00</span>
+              <span class="stat-label">Stock Valuation (Selling)</span>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-icon teal"><i class="fa-solid fa-chart-line"></i></div>
+            <div class="stat-info">
+              <span class="stat-value" id="stat-expected-profit">₹0.00</span>
+              <span class="stat-label">Expected Net Profit</span>
+            </div>
+          </div>
+
+          <div class="stat-card">
             <div class="stat-icon amber"><i class="fa-solid fa-circle-exclamation"></i></div>
             <div class="stat-info">
               <span class="stat-value" id="stat-low-stock">0</span>
-              <span class="stat-label">Low Stock Products</span>
+              <span class="stat-label">Low Stock Warning</span>
             </div>
           </div>
 
@@ -187,16 +205,16 @@
         </div>
 
         <!-- Category Wise Stock Summary Grid -->
-        <h2 style="font-size: 1.1rem; font-weight: 700; margin-bottom: 0.8rem;">Category Inventory Summary</h2>
+        <h2 style="font-size: 1.1rem; font-weight: 700; margin-bottom: 0.8rem;">Category Inventory Summary (INR ₹)</h2>
         <div class="category-summary-grid" id="category-summary-grid">
-          <!-- Populated dynamically via JS for Rice, Oil, Biscuits, Beverages, Vegetables, Fruits, Dairy, Snacks, Cleaning, Personal Care -->
+          <!-- Populated dynamically via JS -->
         </div>
 
         <!-- Dashboard Charts Grid -->
         <div class="charts-grid">
           <div class="chart-card">
             <div class="chart-card-header">
-              <h3 class="chart-card-title">Category Distribution</h3>
+              <h3 class="chart-card-title">Category Valuation Distribution (₹)</h3>
               <i class="fa-solid fa-chart-pie" style="color:var(--primary-color);"></i>
             </div>
             <div class="chart-wrapper">
@@ -216,7 +234,7 @@
 
           <div class="chart-card" style="grid-column: 1 / -1;">
             <div class="chart-card-header">
-              <h3 class="chart-card-title">Monthly Stock Movement & Sales Trend</h3>
+              <h3 class="chart-card-title">Monthly Stock Inflow vs Sales Revenue Trend (INR ₹)</h3>
               <i class="fa-solid fa-chart-line" style="color:var(--primary-color);"></i>
             </div>
             <div class="chart-wrapper">
@@ -231,7 +249,7 @@
         <div class="page-header">
           <div>
             <h1 class="page-title">Interactive Stock Calculator</h1>
-            <p class="page-subtitle">Automatic stock calculation, availability status, and percentage tracker</p>
+            <p class="page-subtitle">Automatic stock calculation, valuation metrics in INR (₹), availability status, and profit estimation</p>
           </div>
         </div>
 
@@ -258,15 +276,27 @@
                 <input type="number" id="calc-sold-qty" class="form-control" placeholder="e.g. 25" min="0.1" step="any">
               </div>
 
-              <button class="btn btn-primary" id="calc-apply-btn" style="width: 100%; margin-top: 1rem;">
+              <!-- Quick Presets -->
+              <div style="margin-top: 0.5rem; margin-bottom: 1rem;">
+                <label style="font-size: 0.78rem; color: var(--text-muted); font-weight: 600; display: block; margin-bottom: 0.35rem;">Quick Quantity Presets:</label>
+                <div style="display: flex; gap: 0.4rem; flex-wrap: wrap;">
+                  <button type="button" class="btn btn-secondary btn-sm" onclick="StockCalculator.setPresetQty(5)">+5</button>
+                  <button type="button" class="btn btn-secondary btn-sm" onclick="StockCalculator.setPresetQty(10)">+10</button>
+                  <button type="button" class="btn btn-secondary btn-sm" onclick="StockCalculator.setPresetQty(50)">+50</button>
+                  <button type="button" class="btn btn-secondary btn-sm" onclick="StockCalculator.setPresetQty(-5)">-5</button>
+                  <button type="button" class="btn btn-secondary btn-sm" onclick="StockCalculator.setPresetQty(-10)">-10</button>
+                </div>
+              </div>
+
+              <button class="btn btn-primary" id="calc-apply-btn" style="width: 100%;">
                 <i class="fa-solid fa-calculator"></i> Apply Stock Update & Save
               </button>
             </div>
 
             <div class="calc-results-panel">
               <div>
-                <h3 style="font-size: 1.1rem; font-weight: 700; margin-bottom: 1rem; color: var(--primary-color);">
-                  <i class="fa-solid fa-gauge-high"></i> Live Stock Calculation
+                <h3 style="font-size: 1.1rem; font-weight: 700; margin-bottom: 1rem; color: var(--primary-color); display: flex; align-items: center; gap: 0.5rem;">
+                  <i class="fa-solid fa-gauge-high"></i> Live Stock & Financial Calculation
                 </h3>
 
                 <div class="calc-summary-row">
@@ -282,6 +312,21 @@
                 <div class="calc-summary-row">
                   <span class="calc-summary-label">Calculated Remaining Stock:</span>
                   <span class="calc-summary-val" id="calc-remaining-stock" style="color:var(--primary-color); font-size:1.3rem;">-</span>
+                </div>
+
+                <div class="calc-summary-row">
+                  <span class="calc-summary-label">Stock Value Before:</span>
+                  <span class="calc-summary-val" id="calc-val-before">₹0.00</span>
+                </div>
+
+                <div class="calc-summary-row">
+                  <span class="calc-summary-label">Stock Value After:</span>
+                  <span class="calc-summary-val" id="calc-val-after">₹0.00</span>
+                </div>
+
+                <div class="calc-summary-row">
+                  <span class="calc-summary-label" style="font-weight:700;">Est. Transaction Profit:</span>
+                  <span class="calc-summary-val" id="calc-profit-estimate" style="color:#16a34a; font-weight:700;">₹0.00</span>
                 </div>
 
                 <div class="calc-progress-box">
@@ -307,8 +352,9 @@
         <div class="chart-card">
           <h4 style="font-weight: 700; margin-bottom: 0.5rem;"><i class="fa-solid fa-lightbulb" style="color:#f59e0b;"></i> Stock Calculator Formula Example</h4>
           <p style="font-size: 0.88rem; color: var(--text-secondary);">
-            <strong>Example Calculation:</strong> If initial <em>Royal Basmati Rice</em> stock is <strong>150 kg</strong> and shop owner enters <strong>25 kg sold</strong>, the calculator immediately updates: <br>
-            <code>Remaining Stock = 150 kg - 25 kg = 125 kg (83% capacity, Stock Available)</code>
+            <strong>Example Calculation:</strong> If initial <em>Royal Basmati Rice 5kg</em> stock is <strong>150 kg</strong> at <strong>₹450.00 / kg</strong> and shop owner enters <strong>25 kg sold</strong>, the calculator immediately updates: <br>
+            <code>Remaining Stock = 150 kg - 25 kg = 125 kg (83% capacity, Stock Available)</code><br>
+            <code>Transaction Revenue = 25 kg &times; ₹450 = ₹11,250.00 | Net Estimated Profit = 25 &times; (₹450 - ₹350) = ₹2,500.00</code>
           </p>
         </div>
       </section>
@@ -318,14 +364,14 @@
         <div class="page-header">
           <div>
             <h1 class="page-title">POS / Sales Checkout Counter</h1>
-            <p class="page-subtitle">Instant grocery sales, cart checkout & real-time inventory deduction</p>
+            <p class="page-subtitle">Instant grocery sales in INR (₹), discount calculator & printable invoice receipt</p>
           </div>
         </div>
 
         <div class="pos-layout">
           <div>
             <div style="margin-bottom: 1rem;">
-              <input type="text" id="pos-search-input" class="form-control" placeholder="🔍 Search product name, barcode or category...">
+              <input type="text" id="pos-search-input" class="form-control" placeholder="🔍 Search product name, barcode, brand or category...">
             </div>
             <div class="pos-products-grid" id="pos-products-grid">
               <!-- Loaded dynamically via JS -->
@@ -333,8 +379,9 @@
           </div>
 
           <div class="pos-cart-panel">
-            <h3 style="font-weight: 700; font-size: 1.1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem;">
-              <i class="fa-solid fa-cart-shopping" style="color:var(--primary-color);"></i> Current Sale Cart
+            <h3 style="font-weight: 700; font-size: 1.1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem; display: flex; align-items: center; justify-content: space-between;">
+              <span><i class="fa-solid fa-cart-shopping" style="color:var(--primary-color);"></i> Current Sale Cart</span>
+              <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: normal;">INR (₹)</span>
             </h3>
             
             <div class="pos-cart-items" id="pos-cart-items">
@@ -342,23 +389,48 @@
             </div>
 
             <div style="border-top: 1px solid var(--border-color); padding-top: 0.85rem;">
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-bottom: 0.75rem;">
+                <div>
+                  <label style="font-size: 0.75rem; font-weight: 600; color: var(--text-muted);">Discount (%):</label>
+                  <select id="pos-discount-select" class="form-control" style="padding: 0.3rem 0.5rem; font-size: 0.82rem;">
+                    <option value="0">No Discount (0%)</option>
+                    <option value="5">5% Discount</option>
+                    <option value="10">10% Discount</option>
+                    <option value="15">15% Discount</option>
+                    <option value="20">20% Discount</option>
+                  </select>
+                </div>
+                <div>
+                  <label style="font-size: 0.75rem; font-weight: 600; color: var(--text-muted);">Payment Mode:</label>
+                  <select id="pos-payment-method" class="form-control" style="padding: 0.3rem 0.5rem; font-size: 0.82rem;">
+                    <option value="Cash">Cash</option>
+                    <option value="UPI / QR">UPI / GPay / PhonePe</option>
+                    <option value="Credit / Debit Card">Card (POS Terminal)</option>
+                  </select>
+                </div>
+              </div>
+
               <div class="calc-summary-row">
                 <span class="calc-summary-label">Subtotal:</span>
                 <span class="calc-summary-val" id="pos-subtotal">₹0.00</span>
               </div>
+              <div class="calc-summary-row" style="color: #16a34a;">
+                <span class="calc-summary-label">Discount Amount:</span>
+                <span class="calc-summary-val" id="pos-discount-amt">- ₹0.00</span>
+              </div>
               <div class="calc-summary-row">
-                <span class="calc-summary-label">Tax (5%):</span>
+                <span class="calc-summary-label">GST Tax (5%):</span>
                 <span class="calc-summary-val" id="pos-tax">₹0.00</span>
               </div>
               <div class="calc-summary-row" style="border-bottom:none;">
                 <span class="calc-summary-label" style="font-weight:700; color:var(--text-primary);">Grand Total:</span>
-                <span class="calc-summary-val" id="pos-total" style="color:var(--primary-color); font-size:1.3rem;">₹0.00</span>
+                <span class="calc-summary-val" id="pos-total" style="color:var(--primary-color); font-size:1.35rem;">₹0.00</span>
               </div>
 
               <div style="display:flex; gap:0.5rem; margin-top:1rem;">
                 <button class="btn btn-secondary" id="pos-clear-btn" style="flex:1;">Clear</button>
                 <button class="btn btn-primary" id="pos-checkout-btn" style="flex:2;">
-                  <i class="fa-solid fa-check"></i> Complete Sale
+                  <i class="fa-solid fa-receipt"></i> Checkout & Receipt
                 </button>
               </div>
             </div>
@@ -371,23 +443,63 @@
         <div class="page-header">
           <div>
             <h1 class="page-title">Product Inventory Management</h1>
-            <p class="page-subtitle">Add, edit, track barcodes, expiry dates, purchase & selling prices</p>
+            <p class="page-subtitle">Track prices in INR (₹), manage stock levels, quick adjusters, barcodes & expiry dates</p>
           </div>
           <button class="btn btn-primary" onclick="App.openAddProductModal()">
             <i class="fa-solid fa-plus"></i> Add New Product
           </button>
         </div>
 
+        <!-- Product Summary Cards Banner -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin-bottom: 1.25rem;">
+          <div class="stat-card" style="padding: 1rem;">
+            <div class="stat-icon green"><i class="fa-solid fa-indian-rupee-sign"></i></div>
+            <div class="stat-info">
+              <span class="stat-value" id="prod-summary-valuation" style="font-size: 1.2rem;">₹0.00</span>
+              <span class="stat-label">Filtered Inventory Valuation</span>
+            </div>
+          </div>
+          <div class="stat-card" style="padding: 1rem;">
+            <div class="stat-icon teal"><i class="fa-solid fa-chart-line"></i></div>
+            <div class="stat-info">
+              <span class="stat-value" id="prod-summary-profit" style="font-size: 1.2rem;">₹0.00</span>
+              <span class="stat-label">Expected Net Profit</span>
+            </div>
+          </div>
+          <div class="stat-card" style="padding: 1rem;">
+            <div class="stat-icon blue"><i class="fa-solid fa-boxes-stacked"></i></div>
+            <div class="stat-info">
+              <span class="stat-value" id="prod-summary-count" style="font-size: 1.2rem;">0</span>
+              <span class="stat-label">Displayed Products</span>
+            </div>
+          </div>
+        </div>
+
         <div class="table-container">
-          <div class="table-toolbar">
-            <div class="table-search-box">
+          <div class="table-toolbar" style="flex-wrap: wrap; gap: 0.75rem;">
+            <div class="table-search-box" style="flex: 2; min-width: 250px;">
               <i class="fa-solid fa-magnifying-glass"></i>
-              <input type="text" id="product-table-search" placeholder="Search product name, brand, barcode...">
+              <input type="text" id="product-table-search" placeholder="Search product name, brand, barcode or supplier...">
             </div>
 
-            <div style="display:flex; gap:0.75rem;">
+            <div style="display:flex; gap:0.5rem; flex-wrap: wrap; flex: 3;">
               <select id="product-category-filter" class="form-control" style="width: auto;">
                 <option value="">All Categories</option>
+              </select>
+
+              <select id="product-status-filter" class="form-control" style="width: auto;">
+                <option value="">All Stock Statuses</option>
+                <option value="in_stock">In Stock Only</option>
+                <option value="low_stock">Low Stock Warning</option>
+                <option value="out_stock">Out of Stock</option>
+              </select>
+
+              <select id="product-sort-filter" class="form-control" style="width: auto;">
+                <option value="name_asc">Sort: Name (A-Z)</option>
+                <option value="price_low">Sort Price: Low to High</option>
+                <option value="price_high">Sort Price: High to Low</option>
+                <option value="stock_low">Sort Stock: Low to High</option>
+                <option value="stock_high">Sort Stock: High to Low</option>
               </select>
             </div>
           </div>
@@ -400,10 +512,10 @@
                   <th>Product Name & Barcode</th>
                   <th>Category</th>
                   <th>Brand</th>
-                  <th>Purchase / Selling Price</th>
-                  <th>Quantity & Unit</th>
-                  <th>Expiry Date</th>
-                  <th>Status</th>
+                  <th>Price in INR (₹)</th>
+                  <th>Quantity & Unit (+/- Quick Adjust)</th>
+                  <th>Expiry Status</th>
+                  <th>Stock Status</th>
                   <th>Actions</th>
                 </tr>
               </thead>
@@ -420,7 +532,7 @@
         <div class="page-header">
           <div>
             <h1 class="page-title">Category Management</h1>
-            <p class="page-subtitle">Manage grocery product categories (Rice, Oil, Biscuits, Dairy, etc.)</p>
+            <p class="page-subtitle">Manage grocery product categories (Rice & Grains, Oil & Ghee, Biscuits, Dairy, etc.)</p>
           </div>
           <button class="btn btn-primary" onclick="App.openAddCategoryModal()">
             <i class="fa-solid fa-plus"></i> Add Category
@@ -452,7 +564,7 @@
         <div class="page-header">
           <div>
             <h1 class="page-title">Supplier Management</h1>
-            <p class="page-subtitle">Track wholesale suppliers, contact information and deliveries</p>
+            <p class="page-subtitle">Track wholesale suppliers, Indian distributors, contact information & orders</p>
           </div>
           <button class="btn btn-primary" onclick="App.openAddSupplierModal()">
             <i class="fa-solid fa-plus"></i> Add Supplier
@@ -484,8 +596,8 @@
       <section id="tab-history" class="tab-pane">
         <div class="page-header">
           <div>
-            <h1 class="page-title">Sales & Stock History</h1>
-            <p class="page-subtitle">Audit trail of completed sales and inventory deductions</p>
+            <h1 class="page-title">Sales & Stock Audit History</h1>
+            <p class="page-subtitle">Audit trail of completed transactions in INR (₹) and inventory deductions</p>
           </div>
         </div>
 
@@ -498,8 +610,8 @@
                   <th>Product Name</th>
                   <th>Category</th>
                   <th>Qty Sold</th>
-                  <th>Unit Price</th>
-                  <th>Total Price</th>
+                  <th>Unit Price (₹)</th>
+                  <th>Total Price (₹)</th>
                   <th>Date & Time</th>
                 </tr>
               </thead>
@@ -516,7 +628,7 @@
         <div class="page-header">
           <div>
             <h1 class="page-title">Inventory Reports & Export</h1>
-            <p class="page-subtitle">Generate Daily, Weekly, Monthly, Category-wise, Low Stock & Out of Stock reports</p>
+            <p class="page-subtitle">Generate Daily, Weekly, Monthly, Category-wise & Valuation reports in INR (₹)</p>
           </div>
           <div style="display:flex; gap:0.75rem;">
             <button class="btn btn-secondary" id="btn-export-excel">
@@ -534,10 +646,10 @@
               <label for="report-type-select">Select Report Type</label>
               <select id="report-type-select" class="form-control">
                 <option value="daily">Daily Stock Movement Report</option>
-                <option value="weekly">Weekly Report</option>
-                <option value="monthly">Monthly Report</option>
-                <option value="category">Category-wise Stock Report</option>
-                <option value="low_stock">Low Stock Warning Report</option>
+                <option value="weekly">Weekly Inventory & Valuation Summary</option>
+                <option value="monthly">Monthly Inventory Valuation & Revenue (₹)</option>
+                <option value="category">Category-wise Stock Breakdown (₹)</option>
+                <option value="low_stock">Low Stock Warning & Reorder Report</option>
                 <option value="out_of_stock">Out of Stock Alert Report</option>
               </select>
             </div>
@@ -549,8 +661,9 @@
         </div>
 
         <div class="table-container" id="report-table-container">
-          <div style="padding:1rem 1.25rem; font-weight:700; font-size:1.1rem; border-bottom:1px solid var(--border-color);" id="report-display-title">
-            Daily Stock Report
+          <div style="padding:1rem 1.25rem; font-weight:700; font-size:1.1rem; border-bottom:1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between;" id="report-display-header">
+            <span id="report-display-title">Daily Stock Report</span>
+            <span class="badge" style="background:var(--primary-light); color:var(--primary-color);">INR (₹) Currency</span>
           </div>
           <div class="table-responsive">
             <table class="data-table">
@@ -570,7 +683,7 @@
         <div class="page-header">
           <div>
             <h1 class="page-title">Backup & Restore Database</h1>
-            <p class="page-subtitle">Export full inventory data to JSON or restore from a saved file</p>
+            <p class="page-subtitle">Export full inventory data to JSON or restore from a saved backup file</p>
           </div>
         </div>
 
@@ -630,12 +743,12 @@
 
           <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1rem;">
             <div class="form-group">
-              <label>Purchase Price (₹)</label>
-              <input type="number" step="0.01" id="product-form-purchase" class="form-control" required placeholder="120.00">
+              <label>Purchase Price in INR (₹) *</label>
+              <input type="number" step="0.01" id="product-form-purchase" class="form-control" required placeholder="350.00">
             </div>
             <div class="form-group">
-              <label>Selling Price (₹)</label>
-              <input type="number" step="0.01" id="product-form-selling" class="form-control" required placeholder="160.00">
+              <label>Selling Price in INR (₹) *</label>
+              <input type="number" step="0.01" id="product-form-selling" class="form-control" required placeholder="450.00">
             </div>
           </div>
 
@@ -675,7 +788,7 @@
           </div>
 
           <div class="form-group">
-            <label>Barcode</label>
+            <label>Barcode Number</label>
             <input type="text" id="product-form-barcode" class="form-control" placeholder="Auto-generated if empty">
           </div>
 
@@ -704,7 +817,7 @@
           <input type="hidden" id="category-edit-id">
           <div class="form-group">
             <label>Category Name *</label>
-            <input type="text" id="category-form-name" class="form-control" required placeholder="e.g. Dairy">
+            <input type="text" id="category-form-name" class="form-control" required placeholder="e.g. Dairy & Eggs">
           </div>
           <div class="form-group">
             <label>Description</label>
@@ -730,50 +843,25 @@
         <div class="modal-body">
           <div class="form-group">
             <label>Supplier Name *</label>
-            <input type="text" id="supplier-form-name" class="form-control" required>
+            <input type="text" id="supplier-form-name" class="form-control" required placeholder="e.g. Fresh Grain Co-op India">
           </div>
           <div class="form-group">
             <label>Phone</label>
-            <input type="text" id="supplier-form-phone" class="form-control">
+            <input type="text" id="supplier-form-phone" class="form-control" placeholder="+91 98765-43210">
           </div>
           <div class="form-group">
             <label>Email</label>
-            <input type="email" id="supplier-form-email" class="form-control">
+            <input type="email" id="supplier-form-email" class="form-control" placeholder="supplier@company.in">
           </div>
           <div class="form-group">
             <label>Address</label>
-            <input type="text" id="supplier-form-address" class="form-control">
+            <input type="text" id="supplier-form-address" class="form-control" placeholder="City, State, India">
           </div>
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" onclick="App.closeModal('supplier-modal')">Cancel</button>
           <button type="submit" class="btn btn-primary">Save Supplier</button>
         </div>
-      </form>
-    </div>
-  </div>
-
-  <!-- Admin Login Modal Overlay -->
-  <div class="auth-wrapper" id="auth-overlay" style="display: none;">
-    <div class="auth-card">
-      <div style="font-size:2.5rem; color:var(--primary-color); margin-bottom:0.5rem;">
-        <i class="fa-solid fa-basket-shopping"></i>
-      </div>
-      <h2 style="font-weight:800; font-size:1.4rem; margin-bottom:0.2rem;">Grocery Shop Admin</h2>
-      <p style="font-size:0.85rem; color:var(--text-secondary); margin-bottom:1.5rem;">Sign in to access Inventory Calculator</p>
-
-      <form id="auth-form">
-        <div class="form-group" style="text-align:left;">
-          <label>Username</label>
-          <input type="text" id="auth-username" class="form-control" value="admin" required>
-        </div>
-        <div class="form-group" style="text-align:left; margin-bottom:1.5rem;">
-          <label>Password</label>
-          <input type="password" id="auth-password" class="form-control" value="password123" required>
-        </div>
-        <button type="submit" class="btn btn-primary" style="width:100%; justify-content:center;">
-          <i class="fa-solid fa-right-to-bracket"></i> Sign In to Dashboard
-        </button>
       </form>
     </div>
   </div>

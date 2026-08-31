@@ -5,6 +5,8 @@
 const POSModule = (function () {
   let cart = [];
   let productsList = [];
+  let currentDiscount = 0; // % discount
+  let paymentMethod = 'Cash';
 
   function init(products) {
     productsList = products;
@@ -17,6 +19,11 @@ const POSModule = (function () {
     renderPOSGrid();
   }
 
+  function formatINR(amount) {
+    const num = Number(amount) || 0;
+    return '\u20B9' + num.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
   function renderPOSGrid(filterQuery = '') {
     const grid = document.getElementById('pos-products-grid');
     if (!grid) return;
@@ -26,22 +33,31 @@ const POSModule = (function () {
       const q = filterQuery.toLowerCase();
       items = items.filter(p =>
         p.product_name.toLowerCase().includes(q) ||
-        p.category_name.toLowerCase().includes(q) ||
-        p.barcode.includes(q)
+        (p.category_name && p.category_name.toLowerCase().includes(q)) ||
+        (p.brand && p.brand.toLowerCase().includes(q)) ||
+        (p.barcode && p.barcode.includes(q))
       );
     }
 
     if (items.length === 0) {
-      grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; color: var(--text-muted); padding: 2rem;">No matching available products in stock</div>';
+      grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; color: var(--text-muted); padding: 3rem; background: var(--bg-card); border-radius: var(--radius-md); border: 1px dashed var(--border-color);"><i class="fa-solid fa-box-open" style="font-size: 2.5rem; margin-bottom: 0.5rem; opacity: 0.5;"></i><br>No matching items available in stock</div>';
       return;
     }
 
     grid.innerHTML = items.map(p => `
       <div class="pos-item-card" onclick="POSModule.addToCart(${p.id})">
-        <img src="${p.image_url}" class="pos-item-img" alt="${p.product_name}" onerror="this.src='https://images.unsplash.com/photo-1542838132-92c53300491e?w=300&auto=format&fit=crop&q=60'">
-        <div class="pos-item-title">${p.product_name}</div>
-        <div class="pos-item-price">₹${p.selling_price.toFixed(2)} / ${p.unit}</div>
-        <span class="badge badge-in-stock" style="font-size: 0.7rem; margin-top: 0.2rem;">${p.quantity} ${p.unit} available</span>
+        <div class="pos-item-img-wrapper">
+          <img src="${p.image_url}" class="pos-item-img" alt="${p.product_name}" onerror="this.src='https://images.unsplash.com/photo-1542838132-92c53300491e?w=300&auto=format&fit=crop&q=60'">
+          <span class="pos-item-stock-tag">${p.quantity} ${p.unit}</span>
+        </div>
+        <div class="pos-item-content">
+          <div class="pos-item-category">${p.category_name || 'Grocery'}</div>
+          <div class="pos-item-title">${p.product_name}</div>
+          <div class="pos-item-price-row">
+            <span class="pos-item-price">${formatINR(p.selling_price)}</span>
+            <span class="pos-item-unit">/ ${p.unit}</span>
+          </div>
+        </div>
       </div>
     `).join('');
   }
@@ -81,7 +97,13 @@ const POSModule = (function () {
     if (!container) return;
 
     if (cart.length === 0) {
-      container.innerHTML = '<div style="text-align: center; color: var(--text-muted); padding: 3rem 0;">Cart is empty.<br>Click a product to add to sale.</div>';
+      container.innerHTML = `
+        <div style="text-align: center; color: var(--text-muted); padding: 3rem 1rem;">
+          <i class="fa-solid fa-cart-flatbed" style="font-size: 2.5rem; margin-bottom: 0.75rem; opacity: 0.4; color: var(--primary-color);"></i>
+          <p style="font-weight: 600;">Your sale cart is empty</p>
+          <p style="font-size: 0.8rem; margin-top: 0.25rem;">Click on any product to add to transaction</p>
+        </div>
+      `;
       updateTotals();
       return;
     }
@@ -89,14 +111,16 @@ const POSModule = (function () {
     container.innerHTML = cart.map((item, idx) => `
       <div class="pos-cart-item">
         <div style="flex:1;">
-          <div style="font-weight:600; font-size:0.85rem;">${item.product_name}</div>
-          <div style="font-size:0.75rem; color:var(--text-secondary);">₹${item.unit_price.toFixed(2)} x ${item.quantity_sold} ${item.unit}</div>
+          <div style="font-weight:600; font-size:0.88rem; color:var(--text-primary);">${item.product_name}</div>
+          <div style="font-size:0.78rem; color:var(--text-secondary); margin-top: 0.15rem;">
+            ${formatINR(item.unit_price)} &times; ${item.quantity_sold} ${item.unit} = <strong>${formatINR(item.unit_price * item.quantity_sold)}</strong>
+          </div>
         </div>
-        <div style="display:flex; align-items:center; gap:0.4rem;">
+        <div style="display:flex; align-items:center; gap:0.35rem;">
           <button class="btn btn-secondary btn-sm" onclick="POSModule.changeCartQty(${idx}, -1)">-</button>
-          <span style="font-weight:700; font-size:0.85rem;">${item.quantity_sold}</span>
+          <span style="font-weight:700; font-size:0.9rem; min-width: 1.5rem; text-align: center;">${item.quantity_sold}</span>
           <button class="btn btn-secondary btn-sm" onclick="POSModule.changeCartQty(${idx}, 1)">+</button>
-          <button class="btn btn-danger btn-sm" onclick="POSModule.removeCartItem(${idx})"><i class="fa-solid fa-trash"></i></button>
+          <button class="btn btn-danger btn-sm" onclick="POSModule.removeCartItem(${idx})" title="Remove"><i class="fa-solid fa-trash"></i></button>
         </div>
       </div>
     `).join('');
@@ -126,22 +150,37 @@ const POSModule = (function () {
 
   function updateTotals() {
     const subtotal = cart.reduce((sum, i) => sum + (i.unit_price * i.quantity_sold), 0);
-    const tax = subtotal * 0.05; // 5% tax
-    const grandTotal = subtotal + tax;
+    const discountAmt = (subtotal * currentDiscount) / 100;
+    const taxableSubtotal = Math.max(0, subtotal - discountAmt);
+    const tax = taxableSubtotal * 0.05; // 5% GST
+    const grandTotal = taxableSubtotal + tax;
 
     const subEl = document.getElementById('pos-subtotal');
     const taxEl = document.getElementById('pos-tax');
     const totalEl = document.getElementById('pos-total');
+    const discEl = document.getElementById('pos-discount-amt');
 
-    if (subEl) subEl.textContent = `₹${subtotal.toFixed(2)}`;
-    if (taxEl) taxEl.textContent = `₹${tax.toFixed(2)}`;
-    if (totalEl) totalEl.textContent = `₹${grandTotal.toFixed(2)}`;
+    if (subEl) subEl.textContent = formatINR(subtotal);
+    if (discEl) discEl.textContent = `- ${formatINR(discountAmt)}`;
+    if (taxEl) taxEl.textContent = formatINR(tax);
+    if (totalEl) totalEl.textContent = formatINR(grandTotal);
+  }
+
+  function setDiscount(percent) {
+    currentDiscount = Math.max(0, Math.min(100, parseFloat(percent) || 0));
+    updateTotals();
+  }
+
+  function setPaymentMethod(method) {
+    paymentMethod = method;
   }
 
   function bindEvents() {
     const searchInput = document.getElementById('pos-search-input');
     const checkoutBtn = document.getElementById('pos-checkout-btn');
     const clearBtn = document.getElementById('pos-clear-btn');
+    const discountSelect = document.getElementById('pos-discount-select');
+    const paymentSelect = document.getElementById('pos-payment-method');
 
     if (searchInput) {
       searchInput.addEventListener('input', (e) => {
@@ -149,39 +188,165 @@ const POSModule = (function () {
       });
     }
 
+    if (discountSelect) {
+      discountSelect.addEventListener('change', (e) => {
+        setDiscount(e.target.value);
+      });
+    }
+
+    if (paymentSelect) {
+      paymentSelect.addEventListener('change', (e) => {
+        setPaymentMethod(e.target.value);
+      });
+    }
+
     if (clearBtn) {
       clearBtn.addEventListener('click', () => {
         cart = [];
+        currentDiscount = 0;
+        if (discountSelect) discountSelect.value = '0';
         renderCart();
+        App.showToast('Cart cleared', 'info');
       });
     }
 
     if (checkoutBtn) {
-      checkoutBtn.addEventListener('click', async () => {
-        if (cart.length === 0) {
-          App.showToast('Cart is empty!', 'warning');
-          return;
-        }
-
-        try {
-          // Process all cart items into sales & update stocks
-          for (const item of cart) {
-            await DB.recordSale({
-              product_id: item.product_id,
-              quantity_sold: item.quantity_sold,
-              unit_price: item.unit_price
-            });
-          }
-
-          App.showToast('Checkout completed & stock levels updated!', 'success');
-          cart = [];
-          renderCart();
-          App.refreshAllData();
-        } catch (err) {
-          App.showToast('Sale failed: ' + err.message, 'error');
-        }
-      });
+      checkoutBtn.addEventListener('click', processCheckout);
     }
+  }
+
+  async function processCheckout() {
+    if (cart.length === 0) {
+      App.showToast('Cart is empty. Please add products to sell!', 'warning');
+      return;
+    }
+
+    const subtotal = cart.reduce((sum, i) => sum + (i.unit_price * i.quantity_sold), 0);
+    const discountAmt = (subtotal * currentDiscount) / 100;
+    const taxableSubtotal = Math.max(0, subtotal - discountAmt);
+    const tax = taxableSubtotal * 0.05;
+    const grandTotal = taxableSubtotal + tax;
+
+    try {
+      // Record each cart item in backend/DB
+      for (const item of cart) {
+        await DB.recordSale({
+          product_id: item.product_id,
+          quantity_sold: item.quantity_sold,
+          unit_price: item.unit_price
+        });
+      }
+
+      showReceiptModal({
+        invoiceNo: `INV-${Date.now().toString().slice(-6)}`,
+        date: new Date().toLocaleString('en-IN'),
+        items: [...cart],
+        subtotal,
+        discountAmt,
+        tax,
+        grandTotal,
+        paymentMethod
+      });
+
+      cart = [];
+      currentDiscount = 0;
+      const discountSelect = document.getElementById('pos-discount-select');
+      if (discountSelect) discountSelect.value = '0';
+      renderCart();
+      await App.refreshAllData();
+
+    } catch (err) {
+      App.showToast(err.message, 'error');
+    }
+  }
+
+  function showReceiptModal(receipt) {
+    let receiptModal = document.getElementById('receipt-modal');
+    if (!receiptModal) {
+      receiptModal = document.createElement('div');
+      receiptModal.id = 'receipt-modal';
+      receiptModal.className = 'modal-overlay';
+      document.body.appendChild(receiptModal);
+    }
+
+    receiptModal.innerHTML = `
+      <div class="modal-container" style="max-width: 480px;">
+        <div class="modal-header">
+          <h3 class="modal-title"><i class="fa-solid fa-receipt" style="color:var(--primary-color);"></i> Sales Receipt / Tax Invoice</h3>
+          <button class="modal-close-btn" onclick="document.getElementById('receipt-modal').classList.remove('active')">&times;</button>
+        </div>
+        <div class="modal-body" id="printable-receipt" style="font-family: inherit;">
+          <div style="text-align: center; padding-bottom: 1rem; border-bottom: 2px dashed var(--border-color); margin-bottom: 1rem;">
+            <h2 style="font-size: 1.25rem; font-weight: 800; color: var(--primary-color); display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
+              <i class="fa-solid fa-basket-shopping"></i> FRESH SUPERMART
+            </h2>
+            <p style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.2rem;">Main Street Market, MG Road, India</p>
+            <p style="font-size: 0.78rem; color: var(--text-muted);">GSTIN: 33ABCDE1234F1Z5 | Ph: +91 98765 43210</p>
+          </div>
+
+          <div style="display: flex; justify-content: space-between; font-size: 0.82rem; margin-bottom: 0.8rem; color: var(--text-secondary);">
+            <div><strong>Invoice:</strong> ${receipt.invoiceNo}</div>
+            <div><strong>Date:</strong> ${receipt.date}</div>
+          </div>
+          <div style="font-size: 0.82rem; margin-bottom: 1rem; color: var(--text-secondary);">
+            <strong>Payment Mode:</strong> <span class="badge" style="background: var(--primary-light); color: var(--primary-color);">${receipt.paymentMethod}</span>
+          </div>
+
+          <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem; margin-bottom: 1rem;">
+            <thead>
+              <tr style="border-bottom: 1px solid var(--border-color); text-align: left; color: var(--text-secondary);">
+                <th style="padding: 0.4rem 0;">Item</th>
+                <th style="text-align: center;">Qty</th>
+                <th style="text-align: right;">Price</th>
+                <th style="text-align: right;">Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${receipt.items.map(item => `
+                <tr style="border-bottom: 1px dashed var(--border-color);">
+                  <td style="padding: 0.4rem 0; font-weight: 500;">${item.product_name}</td>
+                  <td style="text-align: center;">${item.quantity_sold} ${item.unit}</td>
+                  <td style="text-align: right;">${formatINR(item.unit_price)}</td>
+                  <td style="text-align: right; font-weight: 600;">${formatINR(item.unit_price * item.quantity_sold)}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+
+          <div style="border-top: 2px dashed var(--border-color); padding-top: 0.8rem; font-size: 0.88rem;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 0.3rem;">
+              <span>Subtotal:</span>
+              <span>${formatINR(receipt.subtotal)}</span>
+            </div>
+            ${receipt.discountAmt > 0 ? `
+              <div style="display: flex; justify-content: space-between; margin-bottom: 0.3rem; color: #16a34a;">
+                <span>Discount:</span>
+                <span>- ${formatINR(receipt.discountAmt)}</span>
+              </div>
+            ` : ''}
+            <div style="display: flex; justify-content: space-between; margin-bottom: 0.4rem;">
+              <span>GST (5%):</span>
+              <span>${formatINR(receipt.tax)}</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; font-size: 1.15rem; font-weight: 800; color: var(--primary-color); border-top: 1px solid var(--border-color); padding-top: 0.5rem; margin-top: 0.3rem;">
+              <span>Grand Total:</span>
+              <span>${formatINR(receipt.grandTotal)}</span>
+            </div>
+          </div>
+
+          <div style="text-align: center; margin-top: 1.5rem; font-size: 0.78rem; color: var(--text-muted);">
+            Thank you for shopping with us! Please visit again. 🙏
+          </div>
+        </div>
+        <div class="modal-footer" style="gap: 0.75rem;">
+          <button type="button" class="btn btn-secondary" onclick="document.getElementById('receipt-modal').classList.remove('active')">Close</button>
+          <button type="button" class="btn btn-primary" onclick="window.print()"><i class="fa-solid fa-print"></i> Print Receipt</button>
+        </div>
+      </div>
+    `;
+
+    receiptModal.classList.add('active');
+    App.showToast('Sale completed successfully!', 'success');
   }
 
   return {

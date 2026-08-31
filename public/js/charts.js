@@ -7,6 +7,11 @@ const AppCharts = (function () {
   let barChartInstance = null;
   let lineChartInstance = null;
 
+  function formatINR(amount) {
+    const num = Number(amount) || 0;
+    return '\u20B9' + num.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
   function renderCharts(products, categories, sales) {
     renderCategoryPieChart(products, categories);
     renderStockLevelBarChart(products);
@@ -17,16 +22,15 @@ const AppCharts = (function () {
     const canvas = document.getElementById('categoryPieChart');
     if (!canvas) return;
 
-    // Group product counts by category
-    const categoryCounts = {};
-    categories.forEach(c => { categoryCounts[c.category_name] = 0; });
+    const categoryValuations = {};
+    categories.forEach(c => { categoryValuations[c.category_name] = 0; });
     products.forEach(p => {
       const catName = p.category_name || 'Other';
-      categoryCounts[catName] = (categoryCounts[catName] || 0) + 1;
+      categoryValuations[catName] = (categoryValuations[catName] || 0) + (p.quantity * p.selling_price);
     });
 
-    const labels = Object.keys(categoryCounts);
-    const data = Object.values(categoryCounts);
+    const labels = Object.keys(categoryValuations);
+    const data = Object.values(categoryValuations);
 
     const colors = [
       '#16a34a', '#22c55e', '#0284c7', '#38bdf8', '#a855f7',
@@ -57,6 +61,15 @@ const AppCharts = (function () {
               boxWidth: 12,
               font: { family: 'Inter', size: 11 }
             }
+          },
+          tooltip: {
+            callbacks: {
+              label: function (context) {
+                const label = context.label || '';
+                const value = context.raw || 0;
+                return ` ${label}: ${formatINR(value)}`;
+              }
+            }
           }
         }
       }
@@ -67,7 +80,6 @@ const AppCharts = (function () {
     const canvas = document.getElementById('stockBarChart');
     if (!canvas) return;
 
-    // Sort products by stock quantity (Top 8)
     const sorted = [...products].sort((a, b) => b.quantity - a.quantity).slice(0, 8);
     const labels = sorted.map(p => p.product_name.length > 15 ? p.product_name.substring(0, 14) + '...' : p.product_name);
     const quantities = sorted.map(p => p.quantity);
@@ -82,7 +94,7 @@ const AppCharts = (function () {
         labels: labels,
         datasets: [
           {
-            label: 'Current Stock',
+            label: 'Current Stock (Units)',
             data: quantities,
             backgroundColor: '#16a34a',
             borderRadius: 6
@@ -103,7 +115,7 @@ const AppCharts = (function () {
         },
         scales: {
           x: { grid: { display: false } },
-          y: { grid: { color: '#e2e8f0' }, beginAtZero: true }
+          y: { grid: { color: 'rgba(226, 232, 240, 0.4)' }, beginAtZero: true }
         }
       }
     });
@@ -113,16 +125,15 @@ const AppCharts = (function () {
     const canvas = document.getElementById('movementLineChart');
     if (!canvas) return;
 
-    // Aggregate sales data per month
     const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     const currentYear = new Date().getFullYear();
-    const monthlySales = Array(12).fill(0);
-    const monthlyStockIn = [120, 150, 180, 140, 200, 220, 190, 210, 250, 230, 280, 300]; // Stock inflow baseline trend
+    const monthlyRevenue = Array(12).fill(0);
+    const monthlyStockIn = [15000, 22000, 28000, 24000, 31000, 35000, 39000, 42000, 48000, 52000, 58000, 65000];
 
     sales.forEach(s => {
       const d = new Date(s.date);
       if (d.getFullYear() === currentYear) {
-        monthlySales[d.getMonth()] += s.quantity_sold;
+        monthlyRevenue[d.getMonth()] += (s.total_price || 0);
       }
     });
 
@@ -135,18 +146,18 @@ const AppCharts = (function () {
         labels: monthNames,
         datasets: [
           {
-            label: 'Total Stock Inflow',
+            label: 'Target Inventory Stock In (\u20B9)',
             data: monthlyStockIn,
             borderColor: '#16a34a',
-            backgroundColor: 'rgba(22, 163, 74, 0.1)',
+            backgroundColor: 'rgba(22, 163, 74, 0.08)',
             fill: true,
             tension: 0.3
           },
           {
-            label: 'Quantity Sold',
-            data: monthlySales,
+            label: 'Actual Sales Revenue (\u20B9)',
+            data: monthlyRevenue,
             borderColor: '#0284c7',
-            backgroundColor: 'rgba(2, 132, 199, 0.1)',
+            backgroundColor: 'rgba(2, 132, 199, 0.08)',
             fill: true,
             tension: 0.3
           }
@@ -156,11 +167,18 @@ const AppCharts = (function () {
         responsive: true,
         maintainAspectRatio: false,
         plugins: {
-          legend: { position: 'top', labels: { font: { family: 'Inter', size: 11 } } }
+          legend: { position: 'top', labels: { font: { family: 'Inter', size: 11 } } },
+          tooltip: {
+            callbacks: {
+              label: function (context) {
+                return ` ${context.dataset.label}: ${formatINR(context.raw)}`;
+              }
+            }
+          }
         },
         scales: {
           x: { grid: { display: false } },
-          y: { grid: { color: '#e2e8f0' }, beginAtZero: true }
+          y: { grid: { color: 'rgba(226, 232, 240, 0.4)' }, beginAtZero: true }
         }
       }
     });
