@@ -1,6 +1,7 @@
 /**
- * POS & Sales Management Module
- * Enables quick grocery sales, cart building, barcode lookups, and auto-updating stock levels
+ * Fresh Supermart - Professional POS & Billing Counter Module
+ * Handles barcode scanning, quick search, item cart, discount, GST,
+ * UPI QR Code Counter Display, and Printable Tax Invoices
  */
 const POSModule = (function () {
   let cart = [];
@@ -30,17 +31,23 @@ const POSModule = (function () {
 
     let items = productsList.filter(p => p.quantity > 0);
     if (filterQuery) {
-      const q = filterQuery.toLowerCase();
+      const q = filterQuery.toLowerCase().trim();
       items = items.filter(p =>
         p.product_name.toLowerCase().includes(q) ||
         (p.category_name && p.category_name.toLowerCase().includes(q)) ||
         (p.brand && p.brand.toLowerCase().includes(q)) ||
-        (p.barcode && p.barcode.includes(q))
+        (p.barcode && p.barcode.includes(q)) ||
+        String(p.id).includes(q)
       );
     }
 
     if (items.length === 0) {
-      grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; color: var(--text-muted); padding: 3rem; background: var(--bg-card); border-radius: var(--radius-md); border: 1px dashed var(--border-color);"><i class="fa-solid fa-box-open" style="font-size: 2.5rem; margin-bottom: 0.5rem; opacity: 0.5;"></i><br>No matching items available in stock</div>';
+      grid.innerHTML = `
+        <div style="grid-column: 1/-1; text-align: center; color: var(--text-muted); padding: 3rem; background: var(--bg-card); border-radius: var(--radius-md); border: 1px dashed var(--border-color);">
+          <i class="fa-solid fa-box-open" style="font-size: 2.5rem; margin-bottom: 0.5rem; opacity: 0.5;"></i>
+          <p style="font-weight: 600;">No available products match your search</p>
+        </div>
+      `;
       return;
     }
 
@@ -100,8 +107,8 @@ const POSModule = (function () {
       container.innerHTML = `
         <div style="text-align: center; color: var(--text-muted); padding: 3rem 1rem;">
           <i class="fa-solid fa-cart-flatbed" style="font-size: 2.5rem; margin-bottom: 0.75rem; opacity: 0.4; color: var(--primary-color);"></i>
-          <p style="font-weight: 600;">Your sale cart is empty</p>
-          <p style="font-size: 0.8rem; margin-top: 0.25rem;">Click on any product to add to transaction</p>
+          <p style="font-weight: 600;">Sale cart is empty</p>
+          <p style="font-size: 0.8rem; margin-top: 0.25rem;">Scan barcode or click items to add to bill</p>
         </div>
       `;
       updateTotals();
@@ -173,6 +180,56 @@ const POSModule = (function () {
 
   function setPaymentMethod(method) {
     paymentMethod = method;
+    if (method === 'UPI / QR' && cart.length > 0) {
+      openPosUpiModal();
+    }
+  }
+
+  async function openPosUpiModal() {
+    const subtotal = cart.reduce((sum, i) => sum + (i.unit_price * i.quantity_sold), 0);
+    const discountAmt = (subtotal * currentDiscount) / 100;
+    const grandTotal = (subtotal - discountAmt) * 1.05;
+
+    const settings = await DB.getSettings();
+    const upi = settings.payment_settings || {};
+
+    let modal = document.getElementById('pos-upi-counter-modal');
+    if (!modal) {
+      modal = document.createElement('div');
+      modal.id = 'pos-upi-counter-modal';
+      modal.className = 'modal-overlay';
+      document.body.appendChild(modal);
+    }
+
+    modal.innerHTML = `
+      <div class="modal-container" style="max-width: 420px; text-align: center;">
+        <div class="modal-header">
+          <h3 class="modal-title"><i class="fa-solid fa-qrcode" style="color:var(--primary-color);"></i> Customer UPI QR Payment</h3>
+          <button class="modal-close-btn" onclick="document.getElementById('pos-upi-counter-modal').classList.remove('active')">&times;</button>
+        </div>
+        <div class="modal-body" style="padding: 1.5rem;">
+          <p style="font-size: 0.88rem; color: var(--text-secondary); margin-bottom: 1rem;">
+            Ask customer to scan using GPay, PhonePe, Paytm or BHIM:
+          </p>
+          <div style="background: white; padding: 1rem; border-radius: var(--radius-md); display: inline-block; box-shadow: var(--shadow-md); border: 2px solid var(--border-color);">
+            <img src="${upi.upi_qr_image}" alt="Shopkeeper UPI QR" style="width: 200px; height: 200px; object-fit: contain;">
+          </div>
+          <div style="margin-top: 1rem; font-size: 0.95rem; font-weight: 700; color: var(--text-primary);">
+            UPI ID: <span style="color: var(--primary-color);">${upi.upi_id || 'freshsupermart@okaxis'}</span>
+          </div>
+          <div style="font-size: 1.35rem; font-weight: 800; color: var(--primary-color); margin-top: 0.5rem;">
+            Amount: ${formatINR(grandTotal)}
+          </div>
+        </div>
+        <div class="modal-footer" style="justify-content: center;">
+          <button type="button" class="btn btn-primary" onclick="document.getElementById('pos-upi-counter-modal').classList.remove('active'); POSModule.processCheckout();">
+            <i class="fa-solid fa-check"></i> Payment Received, Print Bill
+          </button>
+        </div>
+      </div>
+    `;
+
+    modal.classList.add('active');
   }
 
   function bindEvents() {
@@ -221,6 +278,12 @@ const POSModule = (function () {
       return;
     }
 
+    // If UPI selected and UPI counter modal not opened yet, open it
+    if (paymentMethod === 'UPI / QR' && !document.getElementById('pos-upi-counter-modal')?.classList.contains('active')) {
+      openPosUpiModal();
+      return;
+    }
+
     const subtotal = cart.reduce((sum, i) => sum + (i.unit_price * i.quantity_sold), 0);
     const discountAmt = (subtotal * currentDiscount) / 100;
     const taxableSubtotal = Math.max(0, subtotal - discountAmt);
@@ -231,15 +294,18 @@ const POSModule = (function () {
       // Record each cart item in backend/DB
       for (const item of cart) {
         await DB.recordSale({
+          source: 'pos',
           product_id: item.product_id,
           quantity_sold: item.quantity_sold,
-          unit_price: item.unit_price
+          unit_price: item.unit_price,
+          payment_method: paymentMethod
         });
       }
 
       showReceiptModal({
         invoiceNo: `INV-${Date.now().toString().slice(-6)}`,
         date: new Date().toLocaleString('en-IN'),
+        cashier: App.getCurrentUser()?.name || 'Cashier Admin',
         items: [...cart],
         subtotal,
         discountAmt,
@@ -280,16 +346,17 @@ const POSModule = (function () {
             <h2 style="font-size: 1.25rem; font-weight: 800; color: var(--primary-color); display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
               <i class="fa-solid fa-basket-shopping"></i> FRESH SUPERMART
             </h2>
-            <p style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.2rem;">Main Street Market, MG Road, India</p>
-            <p style="font-size: 0.78rem; color: var(--text-muted);">GSTIN: 33ABCDE1234F1Z5 | Ph: +91 98765 43210</p>
+            <p style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.2rem;">Shop #14, Main Market, MG Road, Bengaluru - 560001</p>
+            <p style="font-size: 0.78rem; color: var(--text-muted);">GSTIN: 29ABCDE1234F1Z5 | Ph: +91 98765 43210</p>
           </div>
 
           <div style="display: flex; justify-content: space-between; font-size: 0.82rem; margin-bottom: 0.8rem; color: var(--text-secondary);">
             <div><strong>Invoice:</strong> ${receipt.invoiceNo}</div>
             <div><strong>Date:</strong> ${receipt.date}</div>
           </div>
-          <div style="font-size: 0.82rem; margin-bottom: 1rem; color: var(--text-secondary);">
-            <strong>Payment Mode:</strong> <span class="badge" style="background: var(--primary-light); color: var(--primary-color);">${receipt.paymentMethod}</span>
+          <div style="display: flex; justify-content: space-between; font-size: 0.82rem; margin-bottom: 1rem; color: var(--text-secondary);">
+            <div><strong>Cashier:</strong> ${receipt.cashier || 'Admin'}</div>
+            <div><strong>Payment Mode:</strong> <span class="badge" style="background: var(--primary-light); color: var(--primary-color);">${receipt.paymentMethod}</span></div>
           </div>
 
           <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem; margin-bottom: 1rem;">
@@ -320,7 +387,7 @@ const POSModule = (function () {
             </div>
             ${receipt.discountAmt > 0 ? `
               <div style="display: flex; justify-content: space-between; margin-bottom: 0.3rem; color: #16a34a;">
-                <span>Discount:</span>
+                <span>Discount (${currentDiscount}%):</span>
                 <span>- ${formatINR(receipt.discountAmt)}</span>
               </div>
             ` : ''}
@@ -335,12 +402,12 @@ const POSModule = (function () {
           </div>
 
           <div style="text-align: center; margin-top: 1.5rem; font-size: 0.78rem; color: var(--text-muted);">
-            Thank you for shopping with us! Please visit again. 🙏
+            Thank you for shopping with Fresh Supermart! Please visit again. 🙏
           </div>
         </div>
         <div class="modal-footer" style="gap: 0.75rem;">
           <button type="button" class="btn btn-secondary" onclick="document.getElementById('receipt-modal').classList.remove('active')">Close</button>
-          <button type="button" class="btn btn-primary" onclick="window.print()"><i class="fa-solid fa-print"></i> Print Receipt</button>
+          <button type="button" class="btn btn-primary" onclick="window.print()"><i class="fa-solid fa-print"></i> Print Invoice</button>
         </div>
       </div>
     `;
@@ -354,6 +421,7 @@ const POSModule = (function () {
     updateProducts,
     addToCart,
     changeCartQty,
-    removeCartItem
+    removeCartItem,
+    processCheckout
   };
 })();

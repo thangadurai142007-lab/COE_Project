@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Fresh Supermart - Grocery Inventory Management & POS (INR ₹)</title>
+  <title>Fresh Supermart - Grocery Inventory, POS & Online Shopping Portal (INR ₹)</title>
 
   <!-- Google Fonts & Font Awesome Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -16,705 +16,1288 @@
 </head>
 <body>
 
-  <!-- Sidebar Navigation -->
-  <aside class="sidebar" id="sidebar">
-    <div class="sidebar-header">
-      <div class="sidebar-brand-logo">
-        <i class="fa-solid fa-basket-shopping"></i>
-      </div>
-      <div>
-        <div class="sidebar-brand-title">Fresh Supermart</div>
-        <div class="sidebar-brand-subtitle">Inventory & POS (INR ₹)</div>
-      </div>
+  <!-- ========================================================= -->
+  <!-- TOP PORTAL SWITCHER & ANNOUNCEMENT BAR                     -->
+  <!-- ========================================================= -->
+  <div class="top-announcement-bar">
+    <div class="top-bar-left">
+      <span class="store-brand-badge"><i class="fa-solid fa-basket-shopping"></i> FRESH SUPERMART</span>
+      <span class="top-bar-tagline">Complete Supermarket Management & Online Shopping Ecosystem</span>
     </div>
-
-    <nav class="sidebar-nav">
-      <div class="nav-section-label">Main Console</div>
-      <a href="#" class="nav-item active" data-tab="tab-dashboard">
-        <i class="fa-solid fa-chart-line"></i> Dashboard
-      </a>
-      <a href="#" class="nav-item" data-tab="tab-calculator">
-        <i class="fa-solid fa-calculator"></i> Stock Calculator
-      </a>
-      <a href="#" class="nav-item" data-tab="tab-pos">
-        <i class="fa-solid fa-cart-shopping"></i> POS & Sales
-      </a>
-
-      <div class="nav-section-label">Inventory Management</div>
-      <a href="#" class="nav-item" data-tab="tab-products">
-        <i class="fa-solid fa-boxes-stacked"></i> Products Inventory
-      </a>
-      <a href="#" class="nav-item" data-tab="tab-categories">
-        <i class="fa-solid fa-tags"></i> Categories
-      </a>
-      <a href="#" class="nav-item" data-tab="tab-suppliers">
-        <i class="fa-solid fa-truck"></i> Suppliers
-      </a>
-
-      <div class="nav-section-label">Analytics & Logs</div>
-      <a href="#" class="nav-item" data-tab="tab-history">
-        <i class="fa-solid fa-clock-rotate-left"></i> Sales History
-      </a>
-      <a href="#" class="nav-item" data-tab="tab-reports">
-        <i class="fa-solid fa-file-contract"></i> Reports & Export
-      </a>
-      <a href="#" class="nav-item" data-tab="tab-backup">
-        <i class="fa-solid fa-database"></i> Backup & Restore
-      </a>
-    </nav>
-
-    <div class="sidebar-footer">
-      <div style="font-size:0.75rem; color:var(--text-muted); text-align:center;">
-        Fresh Supermart v2.0 &copy; 2026<br><span style="color:var(--primary-color); font-weight:600;">INR ₹ Currency Ready</span>
-      </div>
+    <div class="top-bar-right">
+      <button class="btn btn-portal-toggle" id="btn-portal-switch" onclick="App.togglePortal()">
+        <i class="fa-solid fa-basket-shopping"></i> Customer Online Store 🛒
+      </button>
+      <button class="btn btn-secondary btn-sm" onclick="App.resetDemoData()" title="Reset to presentation sample data">
+        <i class="fa-solid fa-rotate"></i> Reset Demo
+      </button>
+      <button class="theme-toggle-btn" id="theme-toggle-btn" title="Toggle Light/Dark Mode">
+        <i class="fa-solid fa-moon"></i>
+      </button>
     </div>
-  </aside>
+  </div>
 
-  <!-- Main Content Layout -->
-  <div class="app-container">
+  <!-- ========================================================= -->
+  <!-- 1. CUSTOMER ONLINE SHOPPING STOREFRONT                      -->
+  <!-- ========================================================= -->
+  <div id="portal-customer-wrapper" style="display: none;">
+    <!-- Customer Header -->
+    <header class="customer-navbar">
+      <div class="customer-nav-container">
+        <div class="customer-brand" onclick="CustomerPortal.selectCategory('all')">
+          <div class="sidebar-brand-logo"><i class="fa-solid fa-basket-shopping"></i></div>
+          <div>
+            <div style="font-size:1.25rem; font-weight:800; color:var(--text-primary); line-height:1.1;">Fresh Supermart</div>
+            <div style="font-size:0.75rem; color:var(--primary-color); font-weight:600;">Daily Fresh Groceries • Super Savings</div>
+          </div>
+        </div>
 
-    <!-- Top Navigation Header -->
-    <header class="navbar">
-      <div class="navbar-left">
-        <button class="toggle-sidebar-btn" id="toggle-sidebar">
-          <i class="fa-solid fa-bars"></i>
-        </button>
-        <div class="search-box-header">
+        <div class="customer-search-bar">
           <i class="fa-solid fa-magnifying-glass"></i>
-          <input type="text" id="main-search-input" placeholder="Search product name, category, barcode...">
-        </div>
-      </div>
-
-      <div class="navbar-right">
-        <!-- Currency Badge Indicator -->
-        <div class="currency-indicator-badge">
-          <i class="fa-solid fa-indian-rupee-sign"></i> <span>INR (₹)</span>
+          <input type="text" id="customer-search-input" placeholder="Search Atta, Rice, Milk, Oil, Biscuits, Maggi, Snacks...">
         </div>
 
-        <!-- Theme Toggle -->
-        <button class="theme-toggle-btn" id="theme-toggle-btn" title="Toggle Light/Dark Theme">
-          <i class="fa-solid fa-moon"></i>
-        </button>
-
-        <!-- Notification Bell -->
-        <div class="notification-dropdown-wrapper">
-          <button class="notification-btn" id="notification-btn" title="Notifications">
-            <i class="fa-solid fa-bell"></i>
-            <span class="notification-badge" id="notif-badge" style="display:none;">0</span>
+        <div class="customer-header-actions">
+          <button class="customer-icon-btn" onclick="CustomerPortal.openWishlistModal()" title="My Wishlist">
+            <i class="fa-regular fa-heart"></i>
+            <span class="badge-count customer-wishlist-count" style="display:none;">0</span>
           </button>
 
-          <div class="notification-menu" id="notification-menu">
-            <div class="notification-header">
-              <span>Stock Alerts & Notifications</span>
-              <i class="fa-solid fa-triangle-exclamation" style="color:var(--status-low-stock);"></i>
-            </div>
-            <div class="notification-list" id="notification-list">
-              <!-- Loaded via JavaScript -->
-            </div>
-          </div>
-        </div>
+          <button class="customer-icon-btn" onclick="CustomerPortal.openCartDrawer()" title="View Shopping Cart">
+            <i class="fa-solid fa-cart-shopping"></i>
+            <span class="badge-count customer-cart-count" style="display:none;">0</span>
+          </button>
 
-        <!-- User Profile & Logout -->
-        <div class="user-profile-badge" id="user-profile-badge">
-          <div class="user-avatar">A</div>
-          <div class="user-info">
-            <span class="user-name">Shop Admin</span>
-            <span class="user-role">Administrator</span>
-          </div>
+          <button class="btn btn-secondary btn-sm" onclick="CustomerPortal.openOrderTrackingModal()" title="Track My Order">
+            <i class="fa-solid fa-truck"></i> Track Order
+          </button>
         </div>
       </div>
     </header>
 
-    <!-- Main Workspace Tab Panes -->
-    <main class="main-content">
+    <!-- Promotional Offers Banner -->
+    <div class="customer-promo-banner">
+      <div class="promo-content">
+        <span><i class="fa-solid fa-fire" style="color:#f59e0b;"></i> Use Coupon <strong>FRESH10</strong> for <strong>10% OFF</strong> on all orders!</span>
+        <span class="promo-dot">•</span>
+        <span><i class="fa-solid fa-truck-fast"></i> <strong>Free Home Delivery</strong> on orders above ₹500</span>
+        <span class="promo-dot">•</span>
+        <span><i class="fa-solid fa-clock"></i> Express 30-45 Mins Store Delivery</span>
+      </div>
+    </div>
 
-      <!-- 1. DASHBOARD TAB -->
-      <section id="tab-dashboard" class="tab-pane active">
-        <div class="page-header">
-          <div>
-            <h1 class="page-title">Grocery Shop Dashboard</h1>
-            <p class="page-subtitle">Real-time inventory metrics, valuation in INR (₹), stock alerts & category analytics</p>
+    <!-- Main Storefront Content -->
+    <div class="customer-container">
+      <!-- Category Chips Filter -->
+      <div class="customer-category-bar" id="customer-category-chips">
+        <!-- Rendered via JS -->
+      </div>
+
+      <!-- Toolbar & Product Count -->
+      <div class="customer-toolbar">
+        <div style="font-size: 0.95rem; font-weight: 700; color: var(--text-primary);">
+          Featured Indian Groceries & Daily Essentials
+        </div>
+        <div style="display: flex; gap: 0.75rem; align-items: center;">
+          <label style="font-size: 0.82rem; color: var(--text-secondary); font-weight: 600;">Sort By:</label>
+          <select id="customer-sort-select" class="form-control" style="width: auto; padding: 0.35rem 0.65rem; font-size: 0.82rem;">
+            <option value="featured">Featured Groceries</option>
+            <option value="price_low">Price: Low to High</option>
+            <option value="price_high">Price: High to Low</option>
+            <option value="rating">Customer Rating</option>
+            <option value="discount">Biggest Discount</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Customer Products Grid -->
+      <div class="customer-products-grid" id="customer-products-grid">
+        <!-- Loaded dynamically via JS -->
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================= -->
+  <!-- 2. SHOPKEEPER / ADMIN MANAGEMENT CONSOLE                  -->
+  <!-- ========================================================= -->
+  <div id="portal-admin-wrapper" class="admin-app-layout">
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-brand-logo">
+          <i class="fa-solid fa-basket-shopping"></i>
+        </div>
+        <div>
+          <div class="sidebar-brand-title">Fresh Supermart</div>
+          <div class="sidebar-brand-subtitle">Shop Management Console</div>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <div class="nav-section-label">Operations</div>
+        <a href="#" class="nav-item active" data-tab="tab-dashboard">
+          <i class="fa-solid fa-chart-line"></i> Dashboard
+        </a>
+        <a href="#" class="nav-item" data-tab="tab-customer-orders">
+          <i class="fa-solid fa-bag-shopping"></i> Customer Orders
+        </a>
+        <a href="#" class="nav-item" data-tab="tab-pos">
+          <i class="fa-solid fa-cash-register"></i> POS & Billing Counter
+        </a>
+        <a href="#" class="nav-item" data-tab="tab-calculator">
+          <i class="fa-solid fa-calculator"></i> Stock Calculator
+        </a>
+
+        <div class="nav-section-label">Stock & Suppliers</div>
+        <a href="#" class="nav-item" data-tab="tab-products">
+          <i class="fa-solid fa-boxes-stacked"></i> Products Inventory
+        </a>
+        <a href="#" class="nav-item" data-tab="tab-movement">
+          <i class="fa-solid fa-arrow-trend-up"></i> Product Movement
+        </a>
+        <a href="#" class="nav-item" data-tab="tab-categories">
+          <i class="fa-solid fa-tags"></i> Categories
+        </a>
+        <a href="#" class="nav-item" data-tab="tab-suppliers">
+          <i class="fa-solid fa-truck"></i> Suppliers & POs
+        </a>
+
+        <div class="nav-section-label">Analytics & Setup</div>
+        <a href="#" class="nav-item" data-tab="tab-history">
+          <i class="fa-solid fa-clock-rotate-left"></i> Sales Audit History
+        </a>
+        <a href="#" class="nav-item" data-tab="tab-reports">
+          <i class="fa-solid fa-file-contract"></i> Reports & Export
+        </a>
+        <a href="#" class="nav-item" data-tab="tab-settings">
+          <i class="fa-solid fa-gears"></i> Payment Settings (UPI)
+        </a>
+        <a href="#" class="nav-item" data-tab="tab-backup">
+          <i class="fa-solid fa-database"></i> Backup & Restore
+        </a>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="user-profile-badge" onclick="App.openModal('auth-modal')">
+          <div class="user-avatar">A</div>
+          <div class="user-info">
+            <span class="user-name" id="user-name-display">Store Owner</span>
+            <span class="user-role" id="user-role-display">ADMIN</span>
           </div>
-          <div style="display:flex; gap:0.75rem;">
-            <button class="btn btn-primary" onclick="App.openAddProductModal()">
-              <i class="fa-solid fa-plus"></i> Add Product
+          <i class="fa-solid fa-right-from-bracket" style="font-size:0.8rem; color:var(--text-muted); margin-left:auto;"></i>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Admin Top Navbar & Content Area -->
+    <div class="app-container">
+      <header class="navbar">
+        <div class="navbar-left">
+          <button class="toggle-sidebar-btn" id="toggle-sidebar">
+            <i class="fa-solid fa-bars"></i>
+          </button>
+          <div class="search-box-header">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input type="text" id="main-search-input" placeholder="Global search products, categories, suppliers, orders...">
+          </div>
+        </div>
+
+        <div class="navbar-right">
+          <div class="currency-indicator-badge">
+            <i class="fa-solid fa-indian-rupee-sign"></i> <span>INR (₹)</span>
+          </div>
+
+          <!-- Notification Dropdown -->
+          <div class="notification-dropdown-wrapper">
+            <button class="notification-btn" id="notification-btn" title="Stock Alerts & Orders">
+              <i class="fa-solid fa-bell"></i>
+              <span class="notification-badge" id="notif-badge" style="display:none;">0</span>
             </button>
-            <button class="btn btn-secondary" onclick="App.openAddCategoryModal()">
-              <i class="fa-solid fa-tag"></i> Add Category
-            </button>
-          </div>
-        </div>
-
-        <!-- Stats KPI Grid -->
-        <div class="stats-grid">
-          <div class="stat-card">
-            <div class="stat-icon green"><i class="fa-solid fa-box-open"></i></div>
-            <div class="stat-info">
-              <span class="stat-value" id="stat-total-products">0</span>
-              <span class="stat-label">Total Products</span>
-            </div>
-          </div>
-
-          <div class="stat-card">
-            <div class="stat-icon blue"><i class="fa-solid fa-layer-group"></i></div>
-            <div class="stat-info">
-              <span class="stat-value" id="stat-total-categories">0</span>
-              <span class="stat-label">Total Categories</span>
-            </div>
-          </div>
-
-          <div class="stat-card">
-            <div class="stat-icon purple"><i class="fa-solid fa-cubes"></i></div>
-            <div class="stat-info">
-              <span class="stat-value" id="stat-total-stock">0</span>
-              <span class="stat-label">Total Stock Units</span>
-            </div>
-          </div>
-
-          <div class="stat-card">
-            <div class="stat-icon emerald"><i class="fa-solid fa-indian-rupee-sign"></i></div>
-            <div class="stat-info">
-              <span class="stat-value" id="stat-total-valuation">₹0.00</span>
-              <span class="stat-label">Stock Valuation (Selling)</span>
-            </div>
-          </div>
-
-          <div class="stat-card">
-            <div class="stat-icon teal"><i class="fa-solid fa-chart-line"></i></div>
-            <div class="stat-info">
-              <span class="stat-value" id="stat-expected-profit">₹0.00</span>
-              <span class="stat-label">Expected Net Profit</span>
-            </div>
-          </div>
-
-          <div class="stat-card">
-            <div class="stat-icon amber"><i class="fa-solid fa-circle-exclamation"></i></div>
-            <div class="stat-info">
-              <span class="stat-value" id="stat-low-stock">0</span>
-              <span class="stat-label">Low Stock Warning</span>
-            </div>
-          </div>
-
-          <div class="stat-card">
-            <div class="stat-icon red"><i class="fa-solid fa-triangle-exclamation"></i></div>
-            <div class="stat-info">
-              <span class="stat-value" id="stat-out-stock">0</span>
-              <span class="stat-label">Out of Stock</span>
+            <div class="notification-menu" id="notification-menu">
+              <div class="notification-header">
+                <span>Alerts & Notifications</span>
+                <i class="fa-solid fa-bell" style="color:var(--primary-color);"></i>
+              </div>
+              <div class="notification-list" id="notification-list"></div>
             </div>
           </div>
         </div>
+      </header>
 
-        <!-- Category Wise Stock Summary Grid -->
-        <h2 style="font-size: 1.1rem; font-weight: 700; margin-bottom: 0.8rem;">Category Inventory Summary (INR ₹)</h2>
-        <div class="category-summary-grid" id="category-summary-grid">
-          <!-- Populated dynamically via JS -->
-        </div>
+      <!-- Main Admin Tabs -->
+      <main class="main-content">
 
-        <!-- Dashboard Charts Grid -->
-        <div class="charts-grid">
-          <div class="chart-card">
-            <div class="chart-card-header">
-              <h3 class="chart-card-title">Category Valuation Distribution (₹)</h3>
-              <i class="fa-solid fa-chart-pie" style="color:var(--primary-color);"></i>
-            </div>
-            <div class="chart-wrapper">
-              <canvas id="categoryPieChart"></canvas>
-            </div>
-          </div>
-
-          <div class="chart-card">
-            <div class="chart-card-header">
-              <h3 class="chart-card-title">Stock Levels vs Threshold</h3>
-              <i class="fa-solid fa-chart-bar" style="color:var(--primary-color);"></i>
-            </div>
-            <div class="chart-wrapper">
-              <canvas id="stockBarChart"></canvas>
-            </div>
-          </div>
-
-          <div class="chart-card" style="grid-column: 1 / -1;">
-            <div class="chart-card-header">
-              <h3 class="chart-card-title">Monthly Stock Inflow vs Sales Revenue Trend (INR ₹)</h3>
-              <i class="fa-solid fa-chart-line" style="color:var(--primary-color);"></i>
-            </div>
-            <div class="chart-wrapper">
-              <canvas id="movementLineChart"></canvas>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- 2. STOCK CALCULATOR TAB -->
-      <section id="tab-calculator" class="tab-pane">
-        <div class="page-header">
-          <div>
-            <h1 class="page-title">Interactive Stock Calculator</h1>
-            <p class="page-subtitle">Automatic stock calculation, valuation metrics in INR (₹), availability status, and profit estimation</p>
-          </div>
-        </div>
-
-        <div class="calculator-card">
-          <div class="calc-grid">
+        <!-- ==================== TAB 1: DASHBOARD ==================== -->
+        <section id="tab-dashboard" class="admin-tab-pane active">
+          <div class="page-header">
             <div>
-              <div class="form-group">
-                <label for="calc-product-select">Select Grocery Product</label>
-                <select id="calc-product-select" class="form-control">
-                  <option value="">-- Select Product --</option>
-                </select>
-              </div>
-
-              <div class="form-group">
-                <label for="calc-action-type">Operation</label>
-                <select id="calc-action-type" class="form-control">
-                  <option value="sell">Record Sale (Deduct Stock)</option>
-                  <option value="add">Add Restock (Increase Stock)</option>
-                </select>
-              </div>
-
-              <div class="form-group">
-                <label for="calc-sold-qty">Quantity Sold / Added (<span id="calc-unit-label">Unit</span>)</label>
-                <input type="number" id="calc-sold-qty" class="form-control" placeholder="e.g. 25" min="0.1" step="any">
-              </div>
-
-              <!-- Quick Presets -->
-              <div style="margin-top: 0.5rem; margin-bottom: 1rem;">
-                <label style="font-size: 0.78rem; color: var(--text-muted); font-weight: 600; display: block; margin-bottom: 0.35rem;">Quick Quantity Presets:</label>
-                <div style="display: flex; gap: 0.4rem; flex-wrap: wrap;">
-                  <button type="button" class="btn btn-secondary btn-sm" onclick="StockCalculator.setPresetQty(5)">+5</button>
-                  <button type="button" class="btn btn-secondary btn-sm" onclick="StockCalculator.setPresetQty(10)">+10</button>
-                  <button type="button" class="btn btn-secondary btn-sm" onclick="StockCalculator.setPresetQty(50)">+50</button>
-                  <button type="button" class="btn btn-secondary btn-sm" onclick="StockCalculator.setPresetQty(-5)">-5</button>
-                  <button type="button" class="btn btn-secondary btn-sm" onclick="StockCalculator.setPresetQty(-10)">-10</button>
-                </div>
-              </div>
-
-              <button class="btn btn-primary" id="calc-apply-btn" style="width: 100%;">
-                <i class="fa-solid fa-calculator"></i> Apply Stock Update & Save
+              <h1 class="page-title">Supermarket Dashboard & Analytics</h1>
+              <p class="page-subtitle">Real-time inventory metrics, online customer orders & smart recommendations</p>
+            </div>
+            <div style="display:flex; gap:0.6rem;">
+              <button class="btn btn-primary btn-sm" onclick="App.openAddProductModal()">
+                <i class="fa-solid fa-plus"></i> Add Product
+              </button>
+              <button class="btn btn-secondary btn-sm" onclick="App.openPurchaseOrderModal()">
+                <i class="fa-solid fa-truck"></i> Purchase Order
               </button>
             </div>
+          </div>
 
-            <div class="calc-results-panel">
+          <!-- ROW 1: Main KPI Cards -->
+          <div class="stats-grid">
+            <div class="stat-card">
+              <div class="stat-icon green"><i class="fa-solid fa-box-open"></i></div>
+              <div class="stat-info">
+                <span class="stat-value" id="stat-total-products">0</span>
+                <span class="stat-label">Total Products</span>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon blue"><i class="fa-solid fa-cubes"></i></div>
+              <div class="stat-info">
+                <span class="stat-value" id="stat-total-stock">0</span>
+                <span class="stat-label">Total Stock Units</span>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon emerald"><i class="fa-solid fa-cash-register"></i></div>
+              <div class="stat-info">
+                <span class="stat-value" id="stat-today-sales">₹0.00</span>
+                <span class="stat-label">Today's Sales (POS + Online)</span>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon teal"><i class="fa-solid fa-chart-line"></i></div>
+              <div class="stat-info">
+                <span class="stat-value" id="stat-today-profit">₹0.00</span>
+                <span class="stat-label">Today's Net Profit</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- ROW 2: Inventory Value, Alerts & Daily Target Progress -->
+          <div class="stats-grid" style="margin-top: -0.5rem;">
+            <div class="stat-card">
+              <div class="stat-icon purple"><i class="fa-solid fa-indian-rupee-sign"></i></div>
+              <div class="stat-info">
+                <span class="stat-value" id="stat-total-valuation">₹0.00</span>
+                <span class="stat-label">Inventory Selling Valuation</span>
+              </div>
+            </div>
+            <div class="stat-card" onclick="App.navigateToTab('tab-products')" style="cursor: pointer;">
+              <div class="stat-icon amber"><i class="fa-solid fa-circle-exclamation"></i></div>
+              <div class="stat-info">
+                <span class="stat-value" id="stat-low-stock">0</span>
+                <span class="stat-label">Low Stock Items Warning</span>
+              </div>
+            </div>
+            <div class="stat-card" onclick="App.navigateToTab('tab-products')" style="cursor: pointer;">
+              <div class="stat-icon red"><i class="fa-solid fa-clock"></i></div>
+              <div class="stat-info">
+                <span class="stat-value" id="stat-expiring-soon">0</span>
+                <span class="stat-label">Expiring Soon (≤ 7 Days)</span>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-info" style="width: 100%;">
+                <div style="display:flex; justify-content:space-between; font-size:0.8rem; font-weight:600; margin-bottom:0.25rem;">
+                  <span>Daily Sales Target: <strong id="target-daily-amount">₹10,000</strong></span>
+                  <span id="target-percentage-text" style="color:var(--primary-color);">0%</span>
+                </div>
+                <div class="progress-bar-bg" style="height: 10px;">
+                  <div class="progress-bar-fill" id="target-progress-fill" style="width: 0%;"></div>
+                </div>
+                <div style="font-size:0.75rem; color:var(--text-muted); margin-top:0.35rem; display:flex; justify-content:space-between;">
+                  <span>Achieved Today: <strong id="target-achieved-amount">₹0</strong></span>
+                  <span id="target-achieved-banner" style="display:none; color:#16a34a; font-weight:700;">🎉 Target Achieved!</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ROW 5: Smart Inventory Insights (Prominently highlighted) -->
+          <div class="chart-card" style="margin-bottom: 1.25rem;">
+            <div class="chart-card-header">
+              <h3 class="chart-card-title"><i class="fa-solid fa-brain" style="color:var(--primary-color);"></i> Smart Inventory Insights & Recommendations</h3>
+              <span class="badge badge-in-stock">Rule-Based Analytics Engine</span>
+            </div>
+            <div class="smart-insights-grid" id="smart-insights-grid">
+              <!-- Rendered via JS -->
+            </div>
+          </div>
+
+          <!-- ROW 3: Sales Overview & Profit Overview Charts -->
+          <div class="charts-grid">
+            <div class="chart-card">
+              <div class="chart-card-header">
+                <h3 class="chart-card-title">Sales Revenue Overview</h3>
+                <div style="display:flex; gap:0.3rem;">
+                  <button class="btn btn-secondary btn-sm" style="padding:0.15rem 0.5rem; font-size:0.75rem;" onclick="AppCharts.renderSalesOverviewChart(sales, 'today')">Today</button>
+                  <button class="btn btn-secondary btn-sm" style="padding:0.15rem 0.5rem; font-size:0.75rem;" onclick="AppCharts.renderSalesOverviewChart(sales, '7d')">7 Days</button>
+                  <button class="btn btn-secondary btn-sm" style="padding:0.15rem 0.5rem; font-size:0.75rem;" onclick="AppCharts.renderSalesOverviewChart(sales, '30d')">30 Days</button>
+                </div>
+              </div>
+              <div class="chart-wrapper"><canvas id="salesOverviewChart"></canvas></div>
+            </div>
+
+            <div class="chart-card">
+              <div class="chart-card-header">
+                <h3 class="chart-card-title">Revenue vs Gross Profit Trend</h3>
+                <i class="fa-solid fa-chart-bar" style="color:var(--primary-color);"></i>
+              </div>
+              <div class="chart-wrapper"><canvas id="profitOverviewChart"></canvas></div>
+            </div>
+          </div>
+
+          <!-- ROW 4: Category Sales & Stock Distribution Charts -->
+          <div class="charts-grid">
+            <div class="chart-card">
+              <div class="chart-card-header">
+                <h3 class="chart-card-title">Category Sales Breakdown (₹)</h3>
+                <i class="fa-solid fa-chart-pie" style="color:var(--primary-color);"></i>
+              </div>
+              <div class="chart-wrapper"><canvas id="categoryPieChart"></canvas></div>
+            </div>
+
+            <div class="chart-card">
+              <div class="chart-card-header">
+                <h3 class="chart-card-title">Inventory Stock Health Distribution</h3>
+                <i class="fa-solid fa-circle-half-stroke" style="color:var(--primary-color);"></i>
+              </div>
+              <div class="chart-wrapper"><canvas id="stockDistributionChart"></canvas></div>
+            </div>
+          </div>
+
+          <!-- Category Inventory Cards -->
+          <h2 style="font-size: 1.05rem; font-weight: 700; margin: 1.25rem 0 0.75rem;">Category Inventory Summary (INR ₹)</h2>
+          <div class="category-summary-grid" id="category-summary-grid">
+            <!-- Rendered dynamically -->
+          </div>
+        </section>
+
+        <!-- ==================== TAB 2: CUSTOMER ORDERS ==================== -->
+        <section id="tab-customer-orders" class="admin-tab-pane">
+          <div class="page-header">
+            <div>
+              <h1 class="page-title">Customer Online Orders</h1>
+              <p class="page-subtitle">Track orders from customer portal, verify UPI payments, update status & print bills</p>
+            </div>
+          </div>
+
+          <div class="table-container">
+            <div class="table-responsive">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Order ID</th>
+                    <th>Customer Name & Phone</th>
+                    <th>Date & Time</th>
+                    <th>Ordered Items</th>
+                    <th>Grand Total</th>
+                    <th>Payment Status</th>
+                    <th>Delivery Status</th>
+                    <th>Invoice</th>
+                  </tr>
+                </thead>
+                <tbody id="customer-orders-table-body">
+                  <!-- Loaded via JS -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==================== TAB 3: POS & BILLING ==================== -->
+        <section id="tab-pos" class="admin-tab-pane">
+          <div class="page-header">
+            <div>
+              <h1 class="page-title">POS / Sales Checkout Counter</h1>
+              <p class="page-subtitle">Barcode scanning, discounts, GST, customer UPI QR counter scan & printable bills</p>
+            </div>
+          </div>
+
+          <div class="pos-layout">
+            <div>
+              <div style="margin-bottom: 1rem;">
+                <input type="text" id="pos-search-input" class="form-control" placeholder="🔍 Search product name, barcode, brand or category...">
+              </div>
+              <div class="pos-products-grid" id="pos-products-grid">
+                <!-- Loaded via JS -->
+              </div>
+            </div>
+
+            <div class="pos-cart-panel">
+              <h3 style="font-weight: 700; font-size: 1.1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem; display: flex; align-items: center; justify-content: space-between;">
+                <span><i class="fa-solid fa-cart-shopping" style="color:var(--primary-color);"></i> Current Sale Cart</span>
+                <span style="font-size: 0.75rem; color: var(--text-muted);">INR (₹)</span>
+              </h3>
+              
+              <div class="pos-cart-items" id="pos-cart-items"></div>
+
+              <div style="border-top: 1px solid var(--border-color); padding-top: 0.85rem;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-bottom: 0.75rem;">
+                  <div>
+                    <label style="font-size: 0.75rem; font-weight: 600; color: var(--text-muted);">Discount (%):</label>
+                    <select id="pos-discount-select" class="form-control" style="padding: 0.3rem 0.5rem; font-size: 0.82rem;">
+                      <option value="0">No Discount (0%)</option>
+                      <option value="5">5% Discount</option>
+                      <option value="10">10% Discount</option>
+                      <option value="15">15% Discount</option>
+                      <option value="20">20% Discount</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label style="font-size: 0.75rem; font-weight: 600; color: var(--text-muted);">Payment Mode:</label>
+                    <select id="pos-payment-method" class="form-control" style="padding: 0.3rem 0.5rem; font-size: 0.82rem;">
+                      <option value="Cash">Cash</option>
+                      <option value="UPI / QR">UPI (Show QR Code)</option>
+                      <option value="Credit / Debit Card">Card (POS Terminal)</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div class="calc-summary-row">
+                  <span class="calc-summary-label">Subtotal:</span>
+                  <span class="calc-summary-val" id="pos-subtotal">₹0.00</span>
+                </div>
+                <div class="calc-summary-row" style="color: #16a34a;">
+                  <span class="calc-summary-label">Discount:</span>
+                  <span class="calc-summary-val" id="pos-discount-amt">- ₹0.00</span>
+                </div>
+                <div class="calc-summary-row">
+                  <span class="calc-summary-label">GST Tax (5%):</span>
+                  <span class="calc-summary-val" id="pos-tax">₹0.00</span>
+                </div>
+                <div class="calc-summary-row" style="border-bottom:none;">
+                  <span class="calc-summary-label" style="font-weight:700; color:var(--text-primary);">Grand Total:</span>
+                  <span class="calc-summary-val" id="pos-total" style="color:var(--primary-color); font-size:1.35rem;">₹0.00</span>
+                </div>
+
+                <div style="display:flex; gap:0.5rem; margin-top:1rem;">
+                  <button class="btn btn-secondary" id="pos-clear-btn" style="flex:1;">Clear</button>
+                  <button class="btn btn-primary" id="pos-checkout-btn" style="flex:2;">
+                    <i class="fa-solid fa-receipt"></i> Checkout & Receipt
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==================== TAB 4: STOCK CALCULATOR ==================== -->
+        <section id="tab-calculator" class="admin-tab-pane">
+          <div class="page-header">
+            <div>
+              <h1 class="page-title">Interactive Stock Calculator</h1>
+              <p class="page-subtitle">Automatic stock calculation, financial valuation, and capacity percentage</p>
+            </div>
+          </div>
+
+          <div class="calculator-card">
+            <div class="calc-grid">
               <div>
-                <h3 style="font-size: 1.1rem; font-weight: 700; margin-bottom: 1rem; color: var(--primary-color); display: flex; align-items: center; gap: 0.5rem;">
-                  <i class="fa-solid fa-gauge-high"></i> Live Stock & Financial Calculation
-                </h3>
-
-                <div class="calc-summary-row">
-                  <span class="calc-summary-label">Initial Stock:</span>
-                  <span class="calc-summary-val" id="calc-initial-stock">-</span>
-                </div>
-
-                <div class="calc-summary-row">
-                  <span class="calc-summary-label">Measurement Unit:</span>
-                  <span class="calc-summary-val" id="calc-unit-display">-</span>
-                </div>
-
-                <div class="calc-summary-row">
-                  <span class="calc-summary-label">Calculated Remaining Stock:</span>
-                  <span class="calc-summary-val" id="calc-remaining-stock" style="color:var(--primary-color); font-size:1.3rem;">-</span>
-                </div>
-
-                <div class="calc-summary-row">
-                  <span class="calc-summary-label">Stock Value Before:</span>
-                  <span class="calc-summary-val" id="calc-val-before">₹0.00</span>
-                </div>
-
-                <div class="calc-summary-row">
-                  <span class="calc-summary-label">Stock Value After:</span>
-                  <span class="calc-summary-val" id="calc-val-after">₹0.00</span>
-                </div>
-
-                <div class="calc-summary-row">
-                  <span class="calc-summary-label" style="font-weight:700;">Est. Transaction Profit:</span>
-                  <span class="calc-summary-val" id="calc-profit-estimate" style="color:#16a34a; font-weight:700;">₹0.00</span>
-                </div>
-
-                <div class="calc-progress-box">
-                  <div style="display:flex; justify-content:space-between; font-size:0.85rem; font-weight:600;">
-                    <span>Stock Capacity Availability:</span>
-                    <span id="calc-percentage-text">0%</span>
-                  </div>
-                  <div class="progress-bar-bg">
-                    <div class="progress-bar-fill" id="calc-progress-fill"></div>
-                  </div>
-                </div>
-              </div>
-
-              <div style="display:flex; align-items:center; justify-content:space-between; margin-top:1.5rem;">
-                <span style="font-size:0.88rem; font-weight:600;">Stock Availability Status:</span>
-                <span class="badge" id="calc-status-badge">Select Product</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Calculator Examples Banner -->
-        <div class="chart-card">
-          <h4 style="font-weight: 700; margin-bottom: 0.5rem;"><i class="fa-solid fa-lightbulb" style="color:#f59e0b;"></i> Stock Calculator Formula Example</h4>
-          <p style="font-size: 0.88rem; color: var(--text-secondary);">
-            <strong>Example Calculation:</strong> If initial <em>Royal Basmati Rice 5kg</em> stock is <strong>150 kg</strong> at <strong>₹450.00 / kg</strong> and shop owner enters <strong>25 kg sold</strong>, the calculator immediately updates: <br>
-            <code>Remaining Stock = 150 kg - 25 kg = 125 kg (83% capacity, Stock Available)</code><br>
-            <code>Transaction Revenue = 25 kg &times; ₹450 = ₹11,250.00 | Net Estimated Profit = 25 &times; (₹450 - ₹350) = ₹2,500.00</code>
-          </p>
-        </div>
-      </section>
-
-      <!-- 3. POS & SALES TAB -->
-      <section id="tab-pos" class="tab-pane">
-        <div class="page-header">
-          <div>
-            <h1 class="page-title">POS / Sales Checkout Counter</h1>
-            <p class="page-subtitle">Instant grocery sales in INR (₹), discount calculator & printable invoice receipt</p>
-          </div>
-        </div>
-
-        <div class="pos-layout">
-          <div>
-            <div style="margin-bottom: 1rem;">
-              <input type="text" id="pos-search-input" class="form-control" placeholder="🔍 Search product name, barcode, brand or category...">
-            </div>
-            <div class="pos-products-grid" id="pos-products-grid">
-              <!-- Loaded dynamically via JS -->
-            </div>
-          </div>
-
-          <div class="pos-cart-panel">
-            <h3 style="font-weight: 700; font-size: 1.1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem; display: flex; align-items: center; justify-content: space-between;">
-              <span><i class="fa-solid fa-cart-shopping" style="color:var(--primary-color);"></i> Current Sale Cart</span>
-              <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: normal;">INR (₹)</span>
-            </h3>
-            
-            <div class="pos-cart-items" id="pos-cart-items">
-              <!-- Loaded via JavaScript -->
-            </div>
-
-            <div style="border-top: 1px solid var(--border-color); padding-top: 0.85rem;">
-              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-bottom: 0.75rem;">
-                <div>
-                  <label style="font-size: 0.75rem; font-weight: 600; color: var(--text-muted);">Discount (%):</label>
-                  <select id="pos-discount-select" class="form-control" style="padding: 0.3rem 0.5rem; font-size: 0.82rem;">
-                    <option value="0">No Discount (0%)</option>
-                    <option value="5">5% Discount</option>
-                    <option value="10">10% Discount</option>
-                    <option value="15">15% Discount</option>
-                    <option value="20">20% Discount</option>
+                <div class="form-group">
+                  <label for="calc-product-select">Select Grocery Product</label>
+                  <select id="calc-product-select" class="form-control">
+                    <option value="">-- Select Product --</option>
                   </select>
                 </div>
-                <div>
-                  <label style="font-size: 0.75rem; font-weight: 600; color: var(--text-muted);">Payment Mode:</label>
-                  <select id="pos-payment-method" class="form-control" style="padding: 0.3rem 0.5rem; font-size: 0.82rem;">
-                    <option value="Cash">Cash</option>
-                    <option value="UPI / QR">UPI / GPay / PhonePe</option>
-                    <option value="Credit / Debit Card">Card (POS Terminal)</option>
+
+                <div class="form-group">
+                  <label for="calc-action-type">Operation</label>
+                  <select id="calc-action-type" class="form-control">
+                    <option value="sell">Record Sale (Deduct Stock)</option>
+                    <option value="add">Add Restock (Increase Stock)</option>
                   </select>
                 </div>
+
+                <div class="form-group">
+                  <label for="calc-sold-qty">Quantity Sold / Added (<span id="calc-unit-label">Unit</span>)</label>
+                  <input type="number" id="calc-sold-qty" class="form-control" placeholder="e.g. 25" min="0.1" step="any">
+                </div>
+
+                <div style="margin-top: 0.5rem; margin-bottom: 1rem;">
+                  <label style="font-size: 0.78rem; color: var(--text-muted); font-weight: 600; display: block; margin-bottom: 0.35rem;">Quick Presets:</label>
+                  <div style="display: flex; gap: 0.4rem; flex-wrap: wrap;">
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="StockCalculator.setPresetQty(5)">+5</button>
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="StockCalculator.setPresetQty(10)">+10</button>
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="StockCalculator.setPresetQty(50)">+50</button>
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="StockCalculator.setPresetQty(-5)">-5</button>
+                  </div>
+                </div>
+
+                <button class="btn btn-primary" id="calc-apply-btn" style="width: 100%;">
+                  <i class="fa-solid fa-calculator"></i> Apply Stock Update & Save
+                </button>
               </div>
 
-              <div class="calc-summary-row">
-                <span class="calc-summary-label">Subtotal:</span>
-                <span class="calc-summary-val" id="pos-subtotal">₹0.00</span>
+              <div class="calc-results-panel">
+                <div>
+                  <h3 style="font-size: 1.1rem; font-weight: 700; margin-bottom: 1rem; color: var(--primary-color); display: flex; align-items: center; gap: 0.5rem;">
+                    <i class="fa-solid fa-gauge-high"></i> Live Stock & Financial Calculation
+                  </h3>
+
+                  <div class="calc-summary-row">
+                    <span class="calc-summary-label">Initial Stock:</span>
+                    <span class="calc-summary-val" id="calc-initial-stock">-</span>
+                  </div>
+                  <div class="calc-summary-row">
+                    <span class="calc-summary-label">Measurement Unit:</span>
+                    <span class="calc-summary-val" id="calc-unit-display">-</span>
+                  </div>
+                  <div class="calc-summary-row">
+                    <span class="calc-summary-label">Calculated Remaining Stock:</span>
+                    <span class="calc-summary-val" id="calc-remaining-stock" style="color:var(--primary-color); font-size:1.3rem;">-</span>
+                  </div>
+                  <div class="calc-summary-row">
+                    <span class="calc-summary-label">Stock Value Before:</span>
+                    <span class="calc-summary-val" id="calc-val-before">₹0.00</span>
+                  </div>
+                  <div class="calc-summary-row">
+                    <span class="calc-summary-label">Stock Value After:</span>
+                    <span class="calc-summary-val" id="calc-val-after">₹0.00</span>
+                  </div>
+                  <div class="calc-summary-row">
+                    <span class="calc-summary-label">Est. Transaction Profit:</span>
+                    <span class="calc-summary-val" id="calc-profit-estimate" style="color:#16a34a; font-weight:700;">₹0.00</span>
+                  </div>
+
+                  <div class="calc-progress-box">
+                    <div style="display:flex; justify-content:space-between; font-size:0.85rem; font-weight:600;">
+                      <span>Stock Capacity Availability:</span>
+                      <span id="calc-percentage-text">0%</span>
+                    </div>
+                    <div class="progress-bar-bg">
+                      <div class="progress-bar-fill" id="calc-progress-fill"></div>
+                    </div>
+                  </div>
+                </div>
+
+                <div style="display:flex; align-items:center; justify-content:space-between; margin-top:1rem;">
+                  <span style="font-size:0.88rem; font-weight:600;">Status:</span>
+                  <span class="badge" id="calc-status-badge">Select Product</span>
+                </div>
               </div>
-              <div class="calc-summary-row" style="color: #16a34a;">
-                <span class="calc-summary-label">Discount Amount:</span>
-                <span class="calc-summary-val" id="pos-discount-amt">- ₹0.00</span>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==================== TAB 5: PRODUCTS INVENTORY ==================== -->
+        <section id="tab-products" class="admin-tab-pane">
+          <div class="page-header">
+            <div>
+              <h1 class="page-title">Product Inventory Management</h1>
+              <p class="page-subtitle">Track batch numbers, expiry dates, purchase/selling margins, stock adjusters & barcodes</p>
+            </div>
+            <button class="btn btn-primary" onclick="App.openAddProductModal()">
+              <i class="fa-solid fa-plus"></i> Add New Product
+            </button>
+          </div>
+
+          <!-- Product Summary Cards Banner -->
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin-bottom: 1.25rem;">
+            <div class="stat-card" style="padding: 1rem;">
+              <div class="stat-icon green"><i class="fa-solid fa-indian-rupee-sign"></i></div>
+              <div class="stat-info">
+                <span class="stat-value" id="prod-summary-valuation" style="font-size: 1.2rem;">₹0.00</span>
+                <span class="stat-label">Filtered Valuation</span>
               </div>
-              <div class="calc-summary-row">
-                <span class="calc-summary-label">GST Tax (5%):</span>
-                <span class="calc-summary-val" id="pos-tax">₹0.00</span>
+            </div>
+            <div class="stat-card" style="padding: 1rem;">
+              <div class="stat-icon teal"><i class="fa-solid fa-chart-line"></i></div>
+              <div class="stat-info">
+                <span class="stat-value" id="prod-summary-profit" style="font-size: 1.2rem;">₹0.00</span>
+                <span class="stat-label">Expected Net Profit</span>
               </div>
-              <div class="calc-summary-row" style="border-bottom:none;">
-                <span class="calc-summary-label" style="font-weight:700; color:var(--text-primary);">Grand Total:</span>
-                <span class="calc-summary-val" id="pos-total" style="color:var(--primary-color); font-size:1.35rem;">₹0.00</span>
+            </div>
+            <div class="stat-card" style="padding: 1rem;">
+              <div class="stat-icon blue"><i class="fa-solid fa-boxes-stacked"></i></div>
+              <div class="stat-info">
+                <span class="stat-value" id="prod-summary-count" style="font-size: 1.2rem;">0</span>
+                <span class="stat-label">Displayed Products</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="table-container">
+            <div class="table-toolbar" style="flex-wrap: wrap; gap: 0.75rem;">
+              <div class="table-search-box" style="flex: 2; min-width: 250px;">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input type="text" id="product-table-search" placeholder="Search product name, brand, barcode, batch or supplier...">
               </div>
 
-              <div style="display:flex; gap:0.5rem; margin-top:1rem;">
-                <button class="btn btn-secondary" id="pos-clear-btn" style="flex:1;">Clear</button>
-                <button class="btn btn-primary" id="pos-checkout-btn" style="flex:2;">
-                  <i class="fa-solid fa-receipt"></i> Checkout & Receipt
+              <div style="display:flex; gap:0.5rem; flex-wrap: wrap; flex: 3;">
+                <select id="product-category-filter" class="form-control" style="width: auto;">
+                  <option value="">All Categories</option>
+                </select>
+                <select id="product-status-filter" class="form-control" style="width: auto;">
+                  <option value="">All Stock Statuses</option>
+                  <option value="in_stock">Healthy Stock</option>
+                  <option value="low_stock">Low Stock Warning</option>
+                  <option value="out_stock">Critical Out of Stock</option>
+                </select>
+                <select id="product-expiry-filter" class="form-control" style="width: auto;">
+                  <option value="">All Expiry Statuses</option>
+                  <option value="soon">Expiring Soon (≤ 7 Days)</option>
+                  <option value="expired">Expired Products</option>
+                </select>
+                <select id="product-sort-filter" class="form-control" style="width: auto;">
+                  <option value="name_asc">Sort: Name (A-Z)</option>
+                  <option value="price_low">Price: Low to High</option>
+                  <option value="price_high">Price: High to Low</option>
+                  <option value="stock_low">Stock: Low to High</option>
+                  <option value="stock_high">Stock: High to Low</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="table-responsive">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Product ID</th>
+                    <th>Product Name & Barcode</th>
+                    <th>Category</th>
+                    <th>Supplier</th>
+                    <th>Cost (₹)</th>
+                    <th>Price (₹)</th>
+                    <th>Quantity (+/- Adjust)</th>
+                    <th>Expiry Date</th>
+                    <th>Stock Health</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="product-table-body"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==================== TAB 6: PRODUCT MOVEMENT ==================== -->
+        <section id="tab-movement" class="admin-tab-pane">
+          <div class="page-header">
+            <div>
+              <h1 class="page-title">Product Movement Analysis</h1>
+              <p class="page-subtitle">Classify inventory into Fast-Moving 🔥, Slow-Moving 🐢, and Non-Moving ⚠️</p>
+            </div>
+            <div style="display: flex; gap: 0.4rem;">
+              <button class="btn btn-secondary btn-sm" onclick="ProductMovement.renderMovementAnalysis('today')">Today</button>
+              <button class="btn btn-secondary btn-sm" onclick="ProductMovement.renderMovementAnalysis('7d')">Last 7 Days</button>
+              <button class="btn btn-primary btn-sm" onclick="ProductMovement.renderMovementAnalysis('30d')">Last 30 Days</button>
+              <button class="btn btn-secondary btn-sm" onclick="ProductMovement.renderMovementAnalysis('3m')">Last 3 Months</button>
+            </div>
+          </div>
+
+          <div class="charts-grid">
+            <div class="chart-card">
+              <h3 class="chart-card-title">Top 5 Fast-Moving Products 🔥</h3>
+              <div class="chart-wrapper"><canvas id="topFastMovingChart"></canvas></div>
+            </div>
+            <div class="chart-card">
+              <h3 class="chart-card-title">Top 5 Slow-Moving Products 🐢</h3>
+              <div class="chart-wrapper"><canvas id="topSlowMovingChart"></canvas></div>
+            </div>
+          </div>
+
+          <div class="table-container" style="margin-top: 1.5rem;">
+            <div class="table-responsive">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Product Name</th>
+                    <th>Category</th>
+                    <th>Units Sold</th>
+                    <th>Current Stock</th>
+                    <th>Total Revenue</th>
+                    <th>Movement Classification</th>
+                  </tr>
+                </thead>
+                <tbody id="movement-table-body"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==================== TAB 7: CATEGORIES ==================== -->
+        <section id="tab-categories" class="admin-tab-pane">
+          <div class="page-header">
+            <div>
+              <h1 class="page-title">Category Management</h1>
+              <p class="page-subtitle">Manage supermarket categories (Rice & Grains, Cooking Oil, Dairy, Biscuits, etc.)</p>
+            </div>
+            <button class="btn btn-primary" onclick="App.openAddCategoryModal()">
+              <i class="fa-solid fa-plus"></i> Add Category
+            </button>
+          </div>
+
+          <div class="table-container">
+            <div class="table-responsive">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Category ID</th>
+                    <th>Category Name</th>
+                    <th>Description</th>
+                    <th>Total Linked Products</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="category-table-body"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==================== TAB 8: SUPPLIERS & POs ==================== -->
+        <section id="tab-suppliers" class="admin-tab-pane">
+          <div class="page-header">
+            <div>
+              <h1 class="page-title">Supplier Management & Purchase Orders</h1>
+              <p class="page-subtitle">Manage wholesale distributors, create purchase orders, and receive stock</p>
+            </div>
+            <div style="display: flex; gap: 0.5rem;">
+              <button class="btn btn-primary" onclick="App.openPurchaseOrderModal()">
+                <i class="fa-solid fa-file-invoice"></i> Create Purchase Order
+              </button>
+              <button class="btn btn-secondary" onclick="App.openModal('supplier-modal')">
+                <i class="fa-solid fa-plus"></i> Add Supplier
+              </button>
+            </div>
+          </div>
+
+          <h3 style="font-size: 1.05rem; font-weight: 700; margin-bottom: 0.8rem;">Recent Purchase Orders (Stock Inflow)</h3>
+          <div class="table-container" style="margin-bottom: 2rem;">
+            <div class="table-responsive">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>PO ID</th>
+                    <th>Supplier Name</th>
+                    <th>PO Date</th>
+                    <th>Items Ordered</th>
+                    <th>Total Amount</th>
+                    <th>Stock Receiving Action</th>
+                  </tr>
+                </thead>
+                <tbody id="purchase-orders-table-body"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <h3 style="font-size: 1.05rem; font-weight: 700; margin-bottom: 0.8rem;">Wholesale Suppliers Directory</h3>
+          <div class="table-container">
+            <div class="table-responsive">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Supplier Name</th>
+                    <th>Phone</th>
+                    <th>Products Supplied</th>
+                    <th>Total Purchases (₹)</th>
+                    <th>Last Order</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody id="supplier-table-body"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==================== TAB 9: SALES HISTORY ==================== -->
+        <section id="tab-history" class="admin-tab-pane">
+          <div class="page-header">
+            <div>
+              <h1 class="page-title">Sales & Audit History</h1>
+              <p class="page-subtitle">Audit trail of POS transactions and online customer purchases in INR (₹)</p>
+            </div>
+          </div>
+
+          <div class="table-container">
+            <div class="table-responsive">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Tx ID</th>
+                    <th>Channel</th>
+                    <th>Product Name</th>
+                    <th>Category</th>
+                    <th>Qty Sold</th>
+                    <th>Unit Price (₹)</th>
+                    <th>Total Price (₹)</th>
+                    <th>Date & Time</th>
+                  </tr>
+                </thead>
+                <tbody id="sales-history-table-body"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==================== TAB 10: REPORTS & EXPORT ==================== -->
+        <section id="tab-reports" class="admin-tab-pane">
+          <div class="page-header">
+            <div>
+              <h1 class="page-title">Inventory & Financial Reports</h1>
+              <p class="page-subtitle">Generate Sales, Inventory Valuation, Profit & Movement reports in INR (₹)</p>
+            </div>
+            <div style="display:flex; gap:0.75rem;">
+              <button class="btn btn-secondary" id="btn-export-excel">
+                <i class="fa-solid fa-file-excel" style="color:#16a34a;"></i> Export to Excel (.xlsx)
+              </button>
+              <button class="btn btn-primary" id="btn-export-pdf">
+                <i class="fa-solid fa-file-pdf"></i> Export / Print PDF
+              </button>
+            </div>
+          </div>
+
+          <div class="chart-card" style="margin-bottom: 1.5rem;">
+            <div style="display:flex; align-items:center; gap:1rem; flex-wrap:wrap;">
+              <div class="form-group" style="margin-bottom:0; flex:1; min-width:240px;">
+                <label for="report-type-select">Select Report Type</label>
+                <select id="report-type-select" class="form-control">
+                  <option value="sales">Sales Performance Audit Report</option>
+                  <option value="inventory">Inventory Valuation & Stock Health Report</option>
+                  <option value="profit">Gross Profit & Margin Analysis Report</option>
+                  <option value="movement">Product Movement (Fast/Slow/Non-Moving) Report</option>
+                  <option value="orders">Customer Online Orders Log Report</option>
+                </select>
+              </div>
+              <button class="btn btn-primary" id="btn-generate-report" style="margin-top:1.5rem;">
+                <i class="fa-solid fa-rotate-right"></i> Generate Report
+              </button>
+            </div>
+          </div>
+
+          <div class="table-container" id="report-table-container">
+            <div style="padding:1rem 1.25rem; font-weight:700; font-size:1.1rem; border-bottom:1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between;">
+              <span id="report-display-title">Daily Sales & Movement Report</span>
+              <span class="badge" style="background:var(--primary-light); color:var(--primary-color);">INR (₹) Commercial</span>
+            </div>
+            <div class="table-responsive">
+              <table class="data-table">
+                <thead id="report-table-head"></thead>
+                <tbody id="report-table-body"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==================== TAB 11: PAYMENT SETTINGS (UPI QR) ==================== -->
+        <section id="tab-settings" class="admin-tab-pane">
+          <div class="page-header">
+            <div>
+              <h1 class="page-title">Shopkeeper Payment Settings & UPI QR Code</h1>
+              <p class="page-subtitle">Upload your own UPI QR Code image and set your UPI ID for Customer Checkout and POS billing</p>
+            </div>
+          </div>
+
+          <div class="calc-grid">
+            <div class="chart-card">
+              <h3 style="font-weight: 700; margin-bottom: 0.75rem;"><i class="fa-solid fa-qrcode" style="color:var(--primary-color);"></i> Shopkeeper UPI QR Code</h3>
+              <p style="font-size:0.85rem; color:var(--text-secondary); margin-bottom:1rem;">
+                This QR Code is automatically displayed when customers checkout using UPI or when you bill customers at the POS counter.
+              </p>
+
+              <div style="text-align: center; background: white; padding: 1.25rem; border-radius: var(--radius-md); border: 2px dashed var(--border-color); margin-bottom: 1.25rem;">
+                <img id="settings-qr-preview" src="" alt="UPI QR Code Preview" style="width: 200px; height: 200px; object-fit: contain;">
+                <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 0.5rem;">Current Uploaded QR Code Preview</div>
+              </div>
+
+              <input type="file" id="settings-qr-file-input" accept="image/*" style="display: none;">
+              <div style="display: flex; gap: 0.5rem;">
+                <button class="btn btn-primary" onclick="document.getElementById('settings-qr-file-input').click()" style="flex:1;">
+                  <i class="fa-solid fa-upload"></i> Upload Your UPI QR Code
                 </button>
               </div>
             </div>
-          </div>
-        </div>
-      </section>
 
-      <!-- 4. PRODUCTS MANAGEMENT TAB -->
-      <section id="tab-products" class="tab-pane">
-        <div class="page-header">
-          <div>
-            <h1 class="page-title">Product Inventory Management</h1>
-            <p class="page-subtitle">Track prices in INR (₹), manage stock levels, quick adjusters, barcodes & expiry dates</p>
-          </div>
-          <button class="btn btn-primary" onclick="App.openAddProductModal()">
-            <i class="fa-solid fa-plus"></i> Add New Product
-          </button>
-        </div>
+            <div class="chart-card">
+              <h3 style="font-weight: 700; margin-bottom: 0.75rem;"><i class="fa-solid fa-wallet" style="color:var(--primary-color);"></i> Payment Gateway Settings</h3>
+              <form id="payment-settings-form">
+                <div class="form-group">
+                  <label>Shopkeeper UPI ID *</label>
+                  <input type="text" id="settings-upi-id-input" class="form-control" placeholder="e.g. freshsupermart@okaxis" required>
+                  <span style="font-size: 0.72rem; color: var(--text-muted);">Customers can pay directly to this VPA address.</span>
+                </div>
 
-        <!-- Product Summary Cards Banner -->
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin-bottom: 1.25rem;">
-          <div class="stat-card" style="padding: 1rem;">
-            <div class="stat-icon green"><i class="fa-solid fa-indian-rupee-sign"></i></div>
-            <div class="stat-info">
-              <span class="stat-value" id="prod-summary-valuation" style="font-size: 1.2rem;">₹0.00</span>
-              <span class="stat-label">Filtered Inventory Valuation</span>
+                <div class="form-group" style="margin-top: 1rem;">
+                  <label style="font-weight: 700; margin-bottom: 0.5rem; display: block;">Enabled Payment Modes:</label>
+                  
+                  <label style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem; cursor: pointer;">
+                    <input type="checkbox" id="setting-enable-upi" checked> <strong>UPI (GPay / PhonePe / Paytm / QR)</strong>
+                  </label>
+                  <label style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem; cursor: pointer;">
+                    <input type="checkbox" id="setting-enable-cash" checked> <strong>Cash Payment (Counter)</strong>
+                  </label>
+                  <label style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem; cursor: pointer;">
+                    <input type="checkbox" id="setting-enable-card" checked> <strong>Card (Debit / Credit POS)</strong>
+                  </label>
+                  <label style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem; cursor: pointer;">
+                    <input type="checkbox" id="setting-enable-cod" checked> <strong>Cash on Delivery (Online Orders)</strong>
+                  </label>
+                </div>
+
+                <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">
+                  <i class="fa-solid fa-floppy-disk"></i> Save Payment Settings
+                </button>
+              </form>
             </div>
           </div>
-          <div class="stat-card" style="padding: 1rem;">
-            <div class="stat-icon teal"><i class="fa-solid fa-chart-line"></i></div>
-            <div class="stat-info">
-              <span class="stat-value" id="prod-summary-profit" style="font-size: 1.2rem;">₹0.00</span>
-              <span class="stat-label">Expected Net Profit</span>
-            </div>
-          </div>
-          <div class="stat-card" style="padding: 1rem;">
-            <div class="stat-icon blue"><i class="fa-solid fa-boxes-stacked"></i></div>
-            <div class="stat-info">
-              <span class="stat-value" id="prod-summary-count" style="font-size: 1.2rem;">0</span>
-              <span class="stat-label">Displayed Products</span>
-            </div>
-          </div>
-        </div>
+        </section>
 
-        <div class="table-container">
-          <div class="table-toolbar" style="flex-wrap: wrap; gap: 0.75rem;">
-            <div class="table-search-box" style="flex: 2; min-width: 250px;">
-              <i class="fa-solid fa-magnifying-glass"></i>
-              <input type="text" id="product-table-search" placeholder="Search product name, brand, barcode or supplier...">
-            </div>
-
-            <div style="display:flex; gap:0.5rem; flex-wrap: wrap; flex: 3;">
-              <select id="product-category-filter" class="form-control" style="width: auto;">
-                <option value="">All Categories</option>
-              </select>
-
-              <select id="product-status-filter" class="form-control" style="width: auto;">
-                <option value="">All Stock Statuses</option>
-                <option value="in_stock">In Stock Only</option>
-                <option value="low_stock">Low Stock Warning</option>
-                <option value="out_stock">Out of Stock</option>
-              </select>
-
-              <select id="product-sort-filter" class="form-control" style="width: auto;">
-                <option value="name_asc">Sort: Name (A-Z)</option>
-                <option value="price_low">Sort Price: Low to High</option>
-                <option value="price_high">Sort Price: High to Low</option>
-                <option value="stock_low">Sort Stock: Low to High</option>
-                <option value="stock_high">Sort Stock: High to Low</option>
-              </select>
+        <!-- ==================== TAB 12: BACKUP & RESTORE ==================== -->
+        <section id="tab-backup" class="admin-tab-pane">
+          <div class="page-header">
+            <div>
+              <h1 class="page-title">Backup & Restore Database</h1>
+              <p class="page-subtitle">Export full supermarket data (products, orders, sales, settings) to JSON</p>
             </div>
           </div>
 
-          <div class="table-responsive">
-            <table class="data-table">
-              <thead>
-                <tr>
-                  <th>Product ID</th>
-                  <th>Product Name & Barcode</th>
-                  <th>Category</th>
-                  <th>Brand</th>
-                  <th>Price in INR (₹)</th>
-                  <th>Quantity & Unit (+/- Quick Adjust)</th>
-                  <th>Expiry Status</th>
-                  <th>Stock Status</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody id="product-table-body">
-                <!-- Loaded via JS -->
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </section>
-
-      <!-- 5. CATEGORIES TAB -->
-      <section id="tab-categories" class="tab-pane">
-        <div class="page-header">
-          <div>
-            <h1 class="page-title">Category Management</h1>
-            <p class="page-subtitle">Manage grocery product categories (Rice & Grains, Oil & Ghee, Biscuits, Dairy, etc.)</p>
-          </div>
-          <button class="btn btn-primary" onclick="App.openAddCategoryModal()">
-            <i class="fa-solid fa-plus"></i> Add Category
-          </button>
-        </div>
-
-        <div class="table-container">
-          <div class="table-responsive">
-            <table class="data-table">
-              <thead>
-                <tr>
-                  <th>Category ID</th>
-                  <th>Category Name</th>
-                  <th>Description</th>
-                  <th>Total Linked Products</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody id="category-table-body">
-                <!-- Loaded via JS -->
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </section>
-
-      <!-- 6. SUPPLIERS TAB -->
-      <section id="tab-suppliers" class="tab-pane">
-        <div class="page-header">
-          <div>
-            <h1 class="page-title">Supplier Management</h1>
-            <p class="page-subtitle">Track wholesale suppliers, Indian distributors, contact information & orders</p>
-          </div>
-          <button class="btn btn-primary" onclick="App.openAddSupplierModal()">
-            <i class="fa-solid fa-plus"></i> Add Supplier
-          </button>
-        </div>
-
-        <div class="table-container">
-          <div class="table-responsive">
-            <table class="data-table">
-              <thead>
-                <tr>
-                  <th>Supplier ID</th>
-                  <th>Supplier Name</th>
-                  <th>Phone Number</th>
-                  <th>Email</th>
-                  <th>Address</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody id="supplier-table-body">
-                <!-- Loaded via JS -->
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </section>
-
-      <!-- 7. SALES HISTORY TAB -->
-      <section id="tab-history" class="tab-pane">
-        <div class="page-header">
-          <div>
-            <h1 class="page-title">Sales & Stock Audit History</h1>
-            <p class="page-subtitle">Audit trail of completed transactions in INR (₹) and inventory deductions</p>
-          </div>
-        </div>
-
-        <div class="table-container">
-          <div class="table-responsive">
-            <table class="data-table">
-              <thead>
-                <tr>
-                  <th>Transaction ID</th>
-                  <th>Product Name</th>
-                  <th>Category</th>
-                  <th>Qty Sold</th>
-                  <th>Unit Price (₹)</th>
-                  <th>Total Price (₹)</th>
-                  <th>Date & Time</th>
-                </tr>
-              </thead>
-              <tbody id="sales-history-table-body">
-                <!-- Loaded via JS -->
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </section>
-
-      <!-- 8. REPORTS & EXPORT TAB -->
-      <section id="tab-reports" class="tab-pane">
-        <div class="page-header">
-          <div>
-            <h1 class="page-title">Inventory Reports & Export</h1>
-            <p class="page-subtitle">Generate Daily, Weekly, Monthly, Category-wise & Valuation reports in INR (₹)</p>
-          </div>
-          <div style="display:flex; gap:0.75rem;">
-            <button class="btn btn-secondary" id="btn-export-excel">
-              <i class="fa-solid fa-file-excel" style="color:#16a34a;"></i> Export to Excel (.xlsx)
-            </button>
-            <button class="btn btn-primary" id="btn-export-pdf">
-              <i class="fa-solid fa-file-pdf"></i> Export / Print PDF
-            </button>
-          </div>
-        </div>
-
-        <div class="chart-card" style="margin-bottom: 1.5rem;">
-          <div style="display:flex; align-items:center; gap:1rem; flex-wrap:wrap;">
-            <div class="form-group" style="margin-bottom:0; flex:1; min-width:240px;">
-              <label for="report-type-select">Select Report Type</label>
-              <select id="report-type-select" class="form-control">
-                <option value="daily">Daily Stock Movement Report</option>
-                <option value="weekly">Weekly Inventory & Valuation Summary</option>
-                <option value="monthly">Monthly Inventory Valuation & Revenue (₹)</option>
-                <option value="category">Category-wise Stock Breakdown (₹)</option>
-                <option value="low_stock">Low Stock Warning & Reorder Report</option>
-                <option value="out_of_stock">Out of Stock Alert Report</option>
-              </select>
+          <div class="calc-grid">
+            <div class="chart-card">
+              <h3 style="font-weight: 700; margin-bottom: 0.8rem;"><i class="fa-solid fa-download" style="color:var(--primary-color);"></i> Download Database Backup</h3>
+              <p style="font-size:0.88rem; color:var(--text-secondary); margin-bottom:1.2rem;">
+                Create an instant JSON backup of all products, categories, suppliers, sales history, customer orders and payment configuration.
+              </p>
+              <button class="btn btn-primary" onclick="
+                const data = DB.getFullData();
+                const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'fresh_supermart_backup.json';
+                a.click();
+              ">
+                <i class="fa-solid fa-file-export"></i> Download Full JSON Backup
+              </button>
             </div>
 
-            <button class="btn btn-primary" id="btn-generate-report" style="margin-top:1.5rem;">
-              <i class="fa-solid fa-rotate-right"></i> Generate Report
-            </button>
+            <div class="chart-card">
+              <h3 style="font-weight: 700; margin-bottom: 0.8rem;"><i class="fa-solid fa-upload" style="color:var(--primary-color);"></i> Restore Database</h3>
+              <p style="font-size:0.88rem; color:var(--text-secondary); margin-bottom:1.2rem;">
+                Select a previously saved <code>.json</code> backup file to restore complete application state.
+              </p>
+              <input type="file" id="restore-file-input" accept=".json" style="display:none;">
+              <button class="btn btn-secondary" onclick="document.getElementById('restore-file-input').click()">
+                <i class="fa-solid fa-file-import"></i> Choose Backup JSON File
+              </button>
+            </div>
           </div>
-        </div>
+        </section>
 
-        <div class="table-container" id="report-table-container">
-          <div style="padding:1rem 1.25rem; font-weight:700; font-size:1.1rem; border-bottom:1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between;" id="report-display-header">
-            <span id="report-display-title">Daily Stock Report</span>
-            <span class="badge" style="background:var(--primary-light); color:var(--primary-color);">INR (₹) Currency</span>
-          </div>
-          <div class="table-responsive">
-            <table class="data-table">
-              <thead id="report-table-head">
-                <!-- Headers via JS -->
-              </thead>
-              <tbody id="report-table-body">
-                <!-- Rows via JS -->
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </section>
-
-      <!-- 9. BACKUP & RESTORE TAB -->
-      <section id="tab-backup" class="tab-pane">
-        <div class="page-header">
-          <div>
-            <h1 class="page-title">Backup & Restore Database</h1>
-            <p class="page-subtitle">Export full inventory data to JSON or restore from a saved backup file</p>
-          </div>
-        </div>
-
-        <div class="calc-grid">
-          <div class="chart-card">
-            <h3 style="font-weight: 700; margin-bottom: 0.8rem;"><i class="fa-solid fa-download" style="color:var(--primary-color);"></i> Download Database Backup</h3>
-            <p style="font-size:0.88rem; color:var(--text-secondary); margin-bottom:1.2rem;">
-              Create an instant JSON backup of all products, categories, suppliers, and sales history.
-            </p>
-            <a href="/api/backup" download="grocery_inventory_backup.json" class="btn btn-primary">
-              <i class="fa-solid fa-file-export"></i> Download JSON Backup
-            </a>
-          </div>
-
-          <div class="chart-card">
-            <h3 style="font-weight: 700; margin-bottom: 0.8rem;"><i class="fa-solid fa-upload" style="color:var(--primary-color);"></i> Restore Database</h3>
-            <p style="font-size:0.88rem; color:var(--text-secondary); margin-bottom:1.2rem;">
-              Select a previously downloaded <code>.json</code> backup file to restore system state.
-            </p>
-            <input type="file" id="restore-file-input" accept=".json" style="display:none;">
-            <button class="btn btn-secondary" onclick="document.getElementById('restore-file-input').click()">
-              <i class="fa-solid fa-file-import"></i> Choose Backup JSON File
-            </button>
-          </div>
-        </div>
-      </section>
-
-    </main>
+      </main>
+    </div>
   </div>
 
-  <!-- Product Modal -->
+  <!-- ========================================================= -->
+  <!-- CUSTOMER CART SLIDE-OVER DRAWER                            -->
+  <!-- ========================================================= -->
+  <div class="customer-cart-overlay" id="customer-cart-overlay" onclick="CustomerPortal.closeCartDrawer()"></div>
+  <aside class="customer-cart-drawer" id="customer-cart-drawer">
+    <div class="cart-drawer-header">
+      <div style="font-weight: 800; font-size: 1.15rem; display: flex; align-items: center; gap: 0.5rem;">
+        <i class="fa-solid fa-basket-shopping" style="color: var(--primary-color);"></i> My Shopping Basket
+      </div>
+      <button class="modal-close-btn" onclick="CustomerPortal.closeCartDrawer()">&times;</button>
+    </div>
+    <div class="cart-drawer-items" id="cart-drawer-items"></div>
+    <div class="cart-drawer-footer" id="cart-drawer-summary"></div>
+  </aside>
+
+  <!-- ========================================================= -->
+  <!-- CUSTOMER WISHLIST MODAL                                   -->
+  <!-- ========================================================= -->
+  <div class="modal-overlay" id="customer-wishlist-modal">
+    <div class="modal-container" style="max-width: 500px;">
+      <div class="modal-header">
+        <h3 class="modal-title"><i class="fa-solid fa-heart" style="color: #ef4444;"></i> My Wishlist</h3>
+        <button class="modal-close-btn" onclick="document.getElementById('customer-wishlist-modal').classList.remove('active')">&times;</button>
+      </div>
+      <div class="modal-body" id="wishlist-modal-items"></div>
+    </div>
+  </div>
+
+  <!-- ========================================================= -->
+  <!-- CUSTOMER CHECKOUT MODAL WITH UPI QR SCANNER               -->
+  <!-- ========================================================= -->
+  <div class="modal-overlay" id="customer-checkout-modal">
+    <div class="modal-container" style="max-width: 580px;">
+      <div class="modal-header">
+        <h3 class="modal-title"><i class="fa-solid fa-shield-halved" style="color:var(--primary-color);"></i> Secure Grocery Checkout</h3>
+        <button class="modal-close-btn" onclick="document.getElementById('customer-checkout-modal').classList.remove('active')">&times;</button>
+      </div>
+      <form id="customer-checkout-form">
+        <div class="modal-body">
+          <!-- Order Summary Box -->
+          <div id="checkout-order-summary"></div>
+
+          <!-- Step 1: Customer Details -->
+          <h4 style="font-weight: 700; font-size: 0.95rem; margin-bottom: 0.75rem;">1. Customer Details</h4>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+            <div class="form-group">
+              <label>Full Name *</label>
+              <input type="text" id="checkout-name" class="form-control" value="Thangadurai" required>
+            </div>
+            <div class="form-group">
+              <label>Phone Number *</label>
+              <input type="tel" id="checkout-phone" class="form-control" value="+91 98765 12345" required>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Email Address</label>
+            <input type="email" id="checkout-email" class="form-control" value="thangadurai@example.com">
+          </div>
+
+          <!-- Step 2: Delivery Method -->
+          <h4 style="font-weight: 700; font-size: 0.95rem; margin: 1rem 0 0.5rem;">2. Delivery Method</h4>
+          <div style="display: flex; gap: 1rem; margin-bottom: 0.8rem;">
+            <label style="display: flex; align-items: center; gap: 0.4rem; cursor: pointer;">
+              <input type="radio" name="delivery-type" value="Home Delivery" checked>
+              <span><i class="fa-solid fa-truck"></i> Home Delivery</span>
+            </label>
+            <label style="display: flex; align-items: center; gap: 0.4rem; cursor: pointer;">
+              <input type="radio" name="delivery-type" value="Store Pickup">
+              <span><i class="fa-solid fa-store"></i> Store Pickup (Free)</span>
+            </label>
+          </div>
+
+          <div class="form-group" id="checkout-address-group">
+            <label>Delivery Address *</label>
+            <textarea id="checkout-address" class="form-control" rows="2" placeholder="House/Flat No, Street, Area, PIN Code">Flat 402, Green Meadows, 5th Main, Bengaluru - 560034</textarea>
+          </div>
+
+          <!-- Step 3: Payment Method (UPI QR Highlighted) -->
+          <h4 style="font-weight: 700; font-size: 0.95rem; margin: 1rem 0 0.5rem;">3. Select Payment Mode</h4>
+          <div style="display: flex; flex-wrap: wrap; gap: 0.75rem; margin-bottom: 1rem;">
+            <label class="payment-method-chip">
+              <input type="radio" name="payment-method" value="UPI" checked>
+              <span><i class="fa-brands fa-google-pay"></i> UPI (Scan & Pay)</span>
+            </label>
+            <label class="payment-method-chip">
+              <input type="radio" name="payment-method" value="Card">
+              <span><i class="fa-solid fa-credit-card"></i> Card</span>
+            </label>
+            <label class="payment-method-chip">
+              <input type="radio" name="payment-method" value="Cash on Delivery">
+              <span><i class="fa-solid fa-hand-holding-dollar"></i> Cash on Delivery</span>
+            </label>
+          </div>
+
+          <!-- UPI QR Code Display Panel (Requirement 51) -->
+          <div id="checkout-upi-qr-panel" class="upi-checkout-box">
+            <div style="font-weight: 700; font-size: 0.95rem; color: var(--text-primary); margin-bottom: 0.4rem;">
+              <i class="fa-solid fa-qrcode" style="color:var(--primary-color);"></i> Scan & Pay via UPI
+            </div>
+            <p style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 0.8rem;">
+              Open Google Pay, PhonePe, Paytm or BHIM on your phone and scan the Shopkeeper's official QR code:
+            </p>
+            <div style="background: white; padding: 0.85rem; border-radius: var(--radius-md); display: inline-block; box-shadow: var(--shadow-sm); border: 2px solid var(--border-color);">
+              <img id="checkout-upi-qr-image" src="" alt="Shopkeeper UPI QR Code" style="width: 180px; height: 180px; object-fit: contain;">
+            </div>
+            <div style="margin-top: 0.6rem; font-size: 0.9rem; font-weight: 700;">
+              UPI ID: <span id="checkout-upi-id-display" style="color:var(--primary-color);">freshsupermart@okaxis</span>
+            </div>
+            <div style="font-size: 1.15rem; font-weight: 800; color: var(--text-primary); margin-top: 0.25rem;">
+              Payable Amount: <span id="checkout-upi-amount-display" style="color:var(--primary-color);">₹0.00</span>
+            </div>
+            <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.5rem;">
+              After paying, click <strong>"I Have Completed Payment"</strong> below to confirm your order.
+            </p>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="document.getElementById('customer-checkout-modal').classList.remove('active')">Cancel</button>
+          <button type="submit" class="btn btn-primary">
+            <i class="fa-solid fa-check"></i> I Have Completed Payment / Place Order
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ========================================================= -->
+  <!-- ORDER CONFIRMATION MODAL                                  -->
+  <!-- ========================================================= -->
+  <div class="modal-overlay" id="order-confirmation-modal">
+    <div class="modal-container" style="max-width: 480px; text-align: center;">
+      <div class="modal-body" style="padding: 2.5rem 1.5rem;">
+        <div style="width: 65px; height: 65px; border-radius: 50%; background: var(--status-in-stock-bg); color: var(--status-in-stock); display: flex; align-items: center; justify-content: center; font-size: 2rem; margin: 0 auto 1rem;">
+          <i class="fa-solid fa-check"></i>
+        </div>
+        <h2 style="font-size: 1.4rem; font-weight: 800; color: var(--text-primary);">🎉 Order Placed Successfully!</h2>
+        <p style="font-size: 0.88rem; color: var(--text-secondary); margin-top: 0.3rem;">
+          Your order has been received by Fresh Supermart.
+        </p>
+
+        <div style="background: var(--bg-main); border-radius: var(--radius-md); padding: 1.25rem; margin: 1.5rem 0; text-align: left; font-size: 0.88rem;">
+          <div class="calc-summary-row">
+            <span class="calc-summary-label">Order Reference ID:</span>
+            <span class="calc-summary-val" id="confirm-order-id">ORD-1025</span>
+          </div>
+          <div class="calc-summary-row">
+            <span class="calc-summary-label">Total Amount:</span>
+            <span class="calc-summary-val" id="confirm-total-amount" style="color:var(--primary-color);">₹0.00</span>
+          </div>
+          <div class="calc-summary-row">
+            <span class="calc-summary-label">Payment Mode:</span>
+            <span class="calc-summary-val" id="confirm-payment-method">UPI</span>
+          </div>
+          <div class="calc-summary-row">
+            <span class="calc-summary-label">Delivery Type:</span>
+            <span class="calc-summary-val" id="confirm-delivery-type">Home Delivery</span>
+          </div>
+          <div id="confirm-pickup-code-box" style="display:none; margin-top: 0.5rem; background: #e0f2fe; padding: 0.6rem; border-radius: var(--radius-sm); text-align: center;">
+            <div style="font-size: 0.75rem; color: #0284c7; font-weight: 600;">STORE PICKUP CODE</div>
+            <div id="confirm-pickup-code" style="font-size: 1.3rem; font-weight: 800; color: #0284c7;">FS-1025</div>
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 0.75rem; justify-content: center;">
+          <button class="btn btn-secondary" onclick="document.getElementById('order-confirmation-modal').classList.remove('active'); CustomerPortal.openOrderTrackingModal();">
+            <i class="fa-solid fa-truck"></i> Track Order
+          </button>
+          <button class="btn btn-primary" onclick="document.getElementById('order-confirmation-modal').classList.remove('active'); CustomerPortal.printCustomerInvoice();">
+            <i class="fa-solid fa-receipt"></i> View Invoice
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================= -->
+  <!-- 7-STAGE ORDER TRACKING MODAL                               -->
+  <!-- ========================================================= -->
+  <div class="modal-overlay" id="order-tracking-modal">
+    <div class="modal-container" style="max-width: 600px;">
+      <div class="modal-header">
+        <h3 class="modal-title"><i class="fa-solid fa-location-dot" style="color:var(--primary-color);"></i> Order Tracking & Status</h3>
+        <button class="modal-close-btn" onclick="document.getElementById('order-tracking-modal').classList.remove('active')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div style="display: flex; justify-content: space-between; font-size: 0.88rem; margin-bottom: 1.25rem; background: var(--bg-main); padding: 1rem; border-radius: var(--radius-md);">
+          <div>
+            <strong>Order: <span id="track-modal-order-id">ORD-1025</span></strong><br>
+            <span style="color: var(--text-muted);" id="track-modal-customer">Thangadurai</span>
+          </div>
+          <div style="text-align: right;">
+            <strong id="track-modal-amount">₹530.00</strong><br>
+            <span class="badge badge-in-stock" id="track-modal-delivery">Home Delivery</span>
+          </div>
+        </div>
+
+        <!-- 7-Stage Visual Stepper -->
+        <div class="order-tracking-stepper">
+          <div class="track-step completed" id="track-step-1">
+            <div class="step-circle"><i class="fa-solid fa-cart-shopping"></i></div>
+            <div class="step-label">1. Order Placed</div>
+          </div>
+          <div class="track-step current" id="track-step-2">
+            <div class="step-circle"><i class="fa-solid fa-credit-card"></i></div>
+            <div class="step-label">2. Payment Confirm</div>
+          </div>
+          <div class="track-step pending" id="track-step-3">
+            <div class="step-circle"><i class="fa-solid fa-circle-check"></i></div>
+            <div class="step-label">3. Order Confirmed</div>
+          </div>
+          <div class="track-step pending" id="track-step-4">
+            <div class="step-circle"><i class="fa-solid fa-box"></i></div>
+            <div class="step-label">4. Preparing</div>
+          </div>
+          <div class="track-step pending" id="track-step-5">
+            <div class="step-circle"><i class="fa-solid fa-store"></i></div>
+            <div class="step-label">5. Ready for Pickup/Delivery</div>
+          </div>
+          <div class="track-step pending" id="track-step-6">
+            <div class="step-circle"><i class="fa-solid fa-truck-fast"></i></div>
+            <div class="step-label">6. Out for Delivery</div>
+          </div>
+          <div class="track-step pending" id="track-step-7">
+            <div class="step-circle"><i class="fa-solid fa-house-chimney-check"></i></div>
+            <div class="step-label">7. Delivered</div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="CustomerPortal.printCustomerInvoice()">
+          <i class="fa-solid fa-print"></i> Print Invoice
+        </button>
+        <button class="btn btn-primary" onclick="document.getElementById('order-tracking-modal').classList.remove('active')">
+          Close
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================= -->
+  <!-- PRODUCT DETAILS & REVIEWS MODAL                            -->
+  <!-- ========================================================= -->
+  <div class="modal-overlay" id="product-details-modal">
+    <div class="modal-container" style="max-width: 650px;">
+      <div class="modal-header">
+        <h3 class="modal-title">Product Details & Reviews</h3>
+        <button class="modal-close-btn" onclick="document.getElementById('product-details-modal').classList.remove('active')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div style="display: grid; grid-template-columns: 200px 1fr; gap: 1.5rem; margin-bottom: 1.5rem;">
+          <img id="detail-modal-img" src="" alt="Product Image" style="width: 100%; height: 180px; object-fit: cover; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+          <div>
+            <div id="detail-modal-category" style="font-size: 0.8rem; color: var(--primary-color); font-weight: 700; text-transform: uppercase;">Category</div>
+            <h3 id="detail-modal-name" style="font-size: 1.25rem; font-weight: 800; margin: 0.2rem 0;">Product Name</h3>
+            <div id="detail-modal-rating" style="font-size: 0.85rem; color: #f59e0b; margin-bottom: 0.5rem;">4.8 ★ (32 reviews)</div>
+            
+            <div style="display: flex; align-items: baseline; gap: 0.5rem; margin-bottom: 0.5rem;">
+              <span id="detail-modal-price" style="font-size: 1.4rem; font-weight: 800; color: var(--primary-color);">₹0.00</span>
+              <span id="detail-modal-mrp" style="font-size: 0.95rem; color: var(--text-muted); text-decoration: line-through;">₹0.00</span>
+              <span id="detail-modal-unit" style="font-size: 0.85rem; color: var(--text-secondary);">/ Kg</span>
+            </div>
+
+            <div style="font-size: 0.82rem; color: var(--text-secondary); margin-bottom: 0.35rem;">
+              Batch: <strong id="detail-modal-batch">N/A</strong> • Expiry: <strong id="detail-modal-expiry">N/A</strong>
+            </div>
+            <div style="font-size: 0.82rem; color: #16a34a; font-weight: 600;" id="detail-modal-stock">
+              Available in stock
+            </div>
+          </div>
+        </div>
+
+        <!-- Customer Reviews -->
+        <h4 style="font-size: 1rem; font-weight: 700; margin-bottom: 0.75rem; border-top: 1px solid var(--border-color); padding-top: 1rem;">
+          Verified Customer Reviews
+        </h4>
+        <div id="detail-modal-reviews-list" style="max-height: 180px; overflow-y: auto; margin-bottom: 1.2rem;"></div>
+
+        <!-- Add Review Form -->
+        <form id="product-review-form" style="background: var(--bg-main); padding: 1rem; border-radius: var(--radius-md);">
+          <div style="font-weight: 700; font-size: 0.85rem; margin-bottom: 0.5rem;">Write a Review</div>
+          <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 0.5rem; margin-bottom: 0.5rem;">
+            <input type="text" id="review-input-name" class="form-control" placeholder="Your Name" required>
+            <select id="review-input-rating" class="form-control">
+              <option value="5">★★★★★ (5 Star)</option>
+              <option value="4">★★★★☆ (4 Star)</option>
+              <option value="3">★★★☆☆ (3 Star)</option>
+            </select>
+          </div>
+          <div class="form-group" style="margin-bottom: 0.5rem;">
+            <input type="text" id="review-input-comment" class="form-control" placeholder="Your experience with this grocery product..." required>
+          </div>
+          <button type="submit" class="btn btn-secondary btn-sm"><i class="fa-solid fa-paper-plane"></i> Submit Review</button>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="document.getElementById('product-details-modal').classList.remove('active')">Close</button>
+        <button class="btn btn-primary" id="detail-modal-add-btn"><i class="fa-solid fa-cart-plus"></i> Add to Cart</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================= -->
+  <!-- ADMIN PRODUCT MODAL                                       -->
+  <!-- ========================================================= -->
   <div class="modal-overlay" id="product-modal">
     <div class="modal-container">
       <div class="modal-header">
@@ -727,7 +1310,7 @@
 
           <div class="form-group">
             <label>Product Name *</label>
-            <input type="text" id="product-form-name" class="form-control" required placeholder="e.g. Royal Basmati Rice 5kg">
+            <input type="text" id="product-form-name" class="form-control" required placeholder="e.g. Aashirvaad Whole Wheat Atta 5kg">
           </div>
 
           <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1rem;">
@@ -737,32 +1320,32 @@
             </div>
             <div class="form-group">
               <label>Brand</label>
-              <input type="text" id="product-form-brand" class="form-control" placeholder="e.g. Royal Agro">
+              <input type="text" id="product-form-brand" class="form-control" placeholder="e.g. Aashirvaad">
             </div>
           </div>
 
           <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1rem;">
             <div class="form-group">
-              <label>Purchase Price in INR (₹) *</label>
-              <input type="number" step="0.01" id="product-form-purchase" class="form-control" required placeholder="350.00">
+              <label>Purchase Cost in INR (₹) *</label>
+              <input type="number" step="0.01" id="product-form-purchase" class="form-control" required placeholder="230.00">
             </div>
             <div class="form-group">
               <label>Selling Price in INR (₹) *</label>
-              <input type="number" step="0.01" id="product-form-selling" class="form-control" required placeholder="450.00">
+              <input type="number" step="0.01" id="product-form-selling" class="form-control" required placeholder="280.00">
             </div>
           </div>
 
           <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:1rem;">
             <div class="form-group">
-              <label>Quantity *</label>
-              <input type="number" step="any" id="product-form-qty" class="form-control" required placeholder="150">
+              <label>Stock Quantity *</label>
+              <input type="number" step="any" id="product-form-qty" class="form-control" required placeholder="35">
             </div>
             <div class="form-group">
               <label>Min Stock Warning</label>
-              <input type="number" id="product-form-min-stock" class="form-control" value="10">
+              <input type="number" id="product-form-min-stock" class="form-control" value="15">
             </div>
             <div class="form-group">
-              <label>Unit *</label>
+              <label>Measurement Unit *</label>
               <select id="product-form-unit" class="form-control">
                 <option value="Kg">Kg</option>
                 <option value="Gram">Gram</option>
@@ -771,25 +1354,30 @@
                 <option value="Packet">Packet</option>
                 <option value="Bottle">Bottle</option>
                 <option value="Piece">Piece</option>
-                <option value="Tetra Pack">Tetra Pack</option>
               </select>
             </div>
           </div>
 
           <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1rem;">
             <div class="form-group">
-              <label>Supplier Name</label>
+              <label>Supplier</label>
               <select id="product-form-supplier" class="form-control"></select>
             </div>
+            <div class="form-group">
+              <label>Batch Number</label>
+              <input type="text" id="product-form-batch" class="form-control" placeholder="e.g. ASH-26-AUG01">
+            </div>
+          </div>
+
+          <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1rem;">
             <div class="form-group">
               <label>Expiry Date</label>
               <input type="date" id="product-form-expiry" class="form-control">
             </div>
-          </div>
-
-          <div class="form-group">
-            <label>Barcode Number</label>
-            <input type="text" id="product-form-barcode" class="form-control" placeholder="Auto-generated if empty">
+            <div class="form-group">
+              <label>Barcode Number</label>
+              <input type="text" id="product-form-barcode" class="form-control" placeholder="8901234567801">
+            </div>
           </div>
 
           <div class="form-group">
@@ -805,7 +1393,41 @@
     </div>
   </div>
 
-  <!-- Category Modal -->
+  <!-- ========================================================= -->
+  <!-- ADMIN PURCHASE ORDER MODAL                                -->
+  <!-- ========================================================= -->
+  <div class="modal-overlay" id="purchase-order-modal">
+    <div class="modal-container" style="max-width: 500px;">
+      <div class="modal-header">
+        <h3 class="modal-title"><i class="fa-solid fa-truck"></i> Create Supplier Purchase Order</h3>
+        <button class="modal-close-btn" onclick="document.getElementById('purchase-order-modal').classList.remove('active')">&times;</button>
+      </div>
+      <form id="purchase-order-form">
+        <div class="modal-body">
+          <div class="form-group">
+            <label>Select Supplier *</label>
+            <select id="po-supplier-select" class="form-control" required></select>
+          </div>
+          <div class="form-group">
+            <label>Select Product to Restock *</label>
+            <select id="po-product-select" class="form-control" required></select>
+          </div>
+          <div class="form-group">
+            <label>Order Quantity (Units) *</label>
+            <input type="number" id="po-quantity-input" class="form-control" value="50" min="1" required>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="document.getElementById('purchase-order-modal').classList.remove('active')">Cancel</button>
+          <button type="submit" class="btn btn-primary">Create Purchase Order</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ========================================================= -->
+  <!-- ADMIN CATEGORY MODAL                                      -->
+  <!-- ========================================================= -->
   <div class="modal-overlay" id="category-modal">
     <div class="modal-container">
       <div class="modal-header">
@@ -817,7 +1439,7 @@
           <input type="hidden" id="category-edit-id">
           <div class="form-group">
             <label>Category Name *</label>
-            <input type="text" id="category-form-name" class="form-control" required placeholder="e.g. Dairy & Eggs">
+            <input type="text" id="category-form-name" class="form-control" required placeholder="e.g. Dairy">
           </div>
           <div class="form-group">
             <label>Description</label>
@@ -832,37 +1454,35 @@
     </div>
   </div>
 
-  <!-- Supplier Modal -->
-  <div class="modal-overlay" id="supplier-modal">
-    <div class="modal-container">
+  <!-- ========================================================= -->
+  <!-- ROLE AUTHENTICATION MODAL                                 -->
+  <!-- ========================================================= -->
+  <div class="modal-overlay" id="auth-modal">
+    <div class="modal-container" style="max-width: 420px; text-align: center;">
       <div class="modal-header">
-        <h3 class="modal-title">Add New Supplier</h3>
-        <button class="modal-close-btn" onclick="App.closeModal('supplier-modal')">&times;</button>
+        <h3 class="modal-title"><i class="fa-solid fa-lock" style="color:var(--primary-color);"></i> Staff & Admin Access</h3>
+        <button class="modal-close-btn" onclick="document.getElementById('auth-modal').classList.remove('active')">&times;</button>
       </div>
-      <form id="supplier-form">
-        <div class="modal-body">
-          <div class="form-group">
-            <label>Supplier Name *</label>
-            <input type="text" id="supplier-form-name" class="form-control" required placeholder="e.g. Fresh Grain Co-op India">
-          </div>
-          <div class="form-group">
-            <label>Phone</label>
-            <input type="text" id="supplier-form-phone" class="form-control" placeholder="+91 98765-43210">
-          </div>
-          <div class="form-group">
-            <label>Email</label>
-            <input type="email" id="supplier-form-email" class="form-control" placeholder="supplier@company.in">
-          </div>
-          <div class="form-group">
-            <label>Address</label>
-            <input type="text" id="supplier-form-address" class="form-control" placeholder="City, State, India">
-          </div>
+      <div class="modal-body" style="padding: 1.5rem;">
+        <p style="font-size: 0.88rem; color: var(--text-secondary); margin-bottom: 1.5rem;">
+          Select a demo role for college project demonstration:
+        </p>
+
+        <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+          <button class="btn btn-primary" style="justify-content: center; padding: 0.75rem;" onclick="App.loginAs('admin')">
+            <i class="fa-solid fa-user-shield"></i> Login as Store Owner (Admin)
+          </button>
+          <button class="btn btn-secondary" style="justify-content: center; padding: 0.75rem;" onclick="App.loginAs('staff')">
+            <i class="fa-solid fa-user"></i> Login as Cashier (Staff)
+          </button>
         </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" onclick="App.closeModal('supplier-modal')">Cancel</button>
-          <button type="submit" class="btn btn-primary">Save Supplier</button>
+
+        <div style="margin-top: 1.5rem; font-size: 0.75rem; color: var(--text-muted); text-align: left; background: var(--bg-main); padding: 0.75rem; border-radius: var(--radius-sm);">
+          <strong>Demo Credentials:</strong><br>
+          • Admin: <code>admin</code> / <code>password123</code> (Full system access)<br>
+          • Staff: <code>staff</code> / <code>staff123</code> (POS checkout & viewing only)
         </div>
-      </form>
+      </div>
     </div>
   </div>
 
@@ -875,7 +1495,8 @@
   <script src="js/charts.js"></script>
   <script src="js/reports.js"></script>
   <script src="js/pos.js"></script>
-  <script src="js/barcode.js"></script>
+  <script src="js/movement.js"></script>
+  <script src="js/customer.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>
