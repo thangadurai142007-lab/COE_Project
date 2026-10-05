@@ -31,6 +31,9 @@
       <button class="btn btn-secondary btn-sm" onclick="App.resetDemoData()" title="Reset to presentation sample data">
         <i class="fa-solid fa-rotate"></i> Reset Demo
       </button>
+      <button class="btn btn-secondary btn-sm" onclick="ValidationModule.openFeedbackModal()" title="Project Better Tomorrow - Shopkeeper Feedback">
+        <i class="fa-solid fa-comment-dots" style="color:var(--primary-color);"></i> Feedback
+      </button>
       <button class="theme-toggle-btn" id="theme-toggle-btn" title="Toggle Light/Dark Mode">
         <i class="fa-solid fa-moon"></i>
       </button>
@@ -174,6 +177,11 @@
         </a>
         <a href="#" class="nav-item" data-tab="tab-backup">
           <i class="fa-solid fa-database"></i> Backup & Restore
+        </a>
+
+        <div class="nav-section-label">Validation & HCD</div>
+        <a href="#" class="nav-item" data-tab="tab-validation">
+          <i class="fa-solid fa-clipboard-check"></i> Field Usability & HCD
         </a>
       </nav>
 
@@ -989,6 +997,24 @@
           </div>
         </section>
 
+        <!-- ==================== TAB: FIELD USABILITY & USER VALIDATION ==================== -->
+        <section id="tab-validation" class="admin-tab-pane">
+          <div class="page-header">
+            <div>
+              <h1 class="page-title">Project Better Tomorrow - Field Usability & HCD</h1>
+              <p class="page-subtitle">Human-centered validation with local grocery store owners, 10-task field checklist & atomic concurrency proof</p>
+            </div>
+            <div style="display:flex; gap:0.6rem;">
+              <button class="btn btn-primary btn-sm" onclick="ValidationModule.openFeedbackModal()">
+                <i class="fa-solid fa-plus"></i> Record Shopkeeper Feedback
+              </button>
+            </div>
+          </div>
+
+          <!-- Dynamic content rendered by ValidationModule -->
+          <div id="validation-dashboard-content"></div>
+        </section>
+
       </main>
     </div>
   </div>
@@ -1104,16 +1130,52 @@
             <div style="font-size: 1.15rem; font-weight: 800; color: var(--text-primary); margin-top: 0.25rem;">
               Payable Amount: <span id="checkout-upi-amount-display" style="color:var(--primary-color);">₹0.00</span>
             </div>
-            <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.5rem;">
-              After paying, click <strong>"I Have Completed Payment"</strong> below to confirm your order.
-            </p>
+
+            <!-- 12-digit UTR Bank Reference Input -->
+            <div class="form-group" style="margin-top: 1rem; text-align: left;">
+              <label style="font-weight: 700; font-size: 0.82rem; color: var(--text-primary); display: flex; align-items: center; justify-content: space-between;">
+                <span><i class="fa-solid fa-receipt" style="color:var(--primary-color);"></i> 12-Digit Bank UPI Reference / UTR *</span>
+                <span style="font-size: 0.7rem; color: var(--text-muted); font-weight: normal;">From GPay / PhonePe / Paytm</span>
+              </label>
+              <input type="text" id="checkout-utr-input" class="form-control" maxlength="12" placeholder="e.g. 123456789012" style="letter-spacing: 1px; font-weight: 600;">
+              <div style="font-size: 0.72rem; color: var(--text-muted); margin-top: 0.25rem;">
+                🔒 Required for server-side bank reconciliation. Orders are verified against this transaction reference.
+              </div>
+            </div>
+
+            <!-- Clearly Labelled Mock Payment Sandbox Option (Demo Only) -->
+            <div class="mock-payment-sandbox" style="margin-top: 1rem; background: #fefce8; border: 2px dashed #ca8a04; border-radius: var(--radius-md); padding: 0.85rem; text-align: left;">
+              <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.35rem;">
+                <span style="font-size: 0.78rem; font-weight: 800; color: #854d0e; text-transform: uppercase;">
+                  🧪 Mock Payment Sandbox (Demo / Defense Mode)
+                </span>
+                <span style="font-size: 0.65rem; background: #fef08a; color: #713f12; padding: 0.15rem 0.4rem; border-radius: 4px; font-weight: 700;">
+                  PROJECT DEFENSE
+                </span>
+              </div>
+              <p style="font-size: 0.73rem; color: #713f12; margin-bottom: 0.5rem; line-height: 1.4;">
+                Simulate gateway responses without real money transfer. Strictly separated from real bank UPI verification.
+              </p>
+              <div style="display: flex; gap: 0.4rem; flex-wrap: wrap;">
+                <button type="button" class="btn btn-sm" id="mock-btn-success" onclick="CustomerPortal.selectMockOutcome('success')" style="font-size: 0.75rem; background: white; border: 1px solid #e2e8f0; color: #16a34a;">
+                  <i class="fa-solid fa-circle-check"></i> Mock Success
+                </button>
+                <button type="button" class="btn btn-sm" id="mock-btn-failure" onclick="CustomerPortal.selectMockOutcome('failure')" style="font-size: 0.75rem; background: white; border: 1px solid #e2e8f0; color: #ef4444;">
+                  <i class="fa-solid fa-circle-xmark"></i> Mock Bank Decline
+                </button>
+                <button type="button" class="btn btn-sm" id="mock-btn-timeout" onclick="CustomerPortal.selectMockOutcome('timeout')" style="font-size: 0.75rem; background: white; border: 1px solid #e2e8f0; color: #ca8a04;">
+                  <i class="fa-solid fa-hourglass-half"></i> Mock Timeout
+                </button>
+              </div>
+              <input type="hidden" id="checkout-mock-outcome" value="">
+            </div>
           </div>
         </div>
 
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" onclick="document.getElementById('customer-checkout-modal').classList.remove('active')">Cancel</button>
-          <button type="submit" class="btn btn-primary">
-            <i class="fa-solid fa-check"></i> I Have Completed Payment / Place Order
+          <button type="submit" class="btn btn-primary" id="checkout-submit-btn">
+            <i class="fa-solid fa-lock"></i> Submit Order & Verify Payment
           </button>
         </div>
       </form>
@@ -1455,6 +1517,141 @@
   </div>
 
   <!-- ========================================================= -->
+  <!-- PROJECT BETTER TOMORROW: SHOPKEEPER FEEDBACK MODAL         -->
+  <!-- ========================================================= -->
+  <div class="modal-overlay" id="shopkeeper-feedback-modal">
+    <div class="modal-container" style="max-width: 540px;">
+      <div class="modal-header">
+        <h3 class="modal-title"><i class="fa-solid fa-comment-dots" style="color:var(--primary-color);"></i> Project Better Tomorrow - Field Feedback</h3>
+        <button class="modal-close-btn" onclick="ValidationModule.closeFeedbackModal()">&times;</button>
+      </div>
+      <form id="shopkeeper-feedback-form">
+        <div class="modal-body">
+          <p style="font-size: 0.82rem; color: var(--text-secondary); margin-bottom: 1rem;">
+            Help evaluate this grocery management system to solve real problems for local kirana and supermarket owners.
+          </p>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+            <div class="form-group">
+              <label>Tester / Storekeeper Name</label>
+              <input type="text" id="fb-user-name" class="form-control" placeholder="e.g. Ramesh Patel">
+            </div>
+            <div class="form-group">
+              <label>Store Type *</label>
+              <select id="fb-store-type" class="form-control" required>
+                <option value="General Kirana Store">General Kirana Store</option>
+                <option value="Supermarket / Minimart">Supermarket / Minimart</option>
+                <option value="Fruits & Vegetables Stall">Fruits & Vegetables Stall</option>
+                <option value="Dairy & Bakery Depot">Dairy & Bakery Depot</option>
+                <option value="Specialty Organic Store">Specialty Organic Store</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Usage Experience Level</label>
+            <select id="fb-experience" class="form-control">
+              <option value="First-time Test Drive (15 mins)">First-time Test Drive (15 mins)</option>
+              <option value="Day-long Store Simulation (10-30 customers)">Day-long Store Simulation (10-30 customers)</option>
+              <option value="Regular Store Owner Field Evaluation">Regular Store Owner Field Evaluation</option>
+            </select>
+          </div>
+
+          <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.75rem; background: var(--bg-main); padding: 0.75rem; border-radius: var(--radius-md); border: 1px solid var(--border-color); margin-bottom: 1rem;">
+            <div class="form-group" style="margin-bottom:0.4rem;">
+              <label style="font-size: 0.78rem;">Ease of Use (1-5)</label>
+              <select id="fb-rating-ease" class="form-control" style="font-size:0.8rem; padding: 0.35rem 0.5rem;">
+                <option value="5">⭐⭐⭐⭐⭐ (5 - Very Easy)</option>
+                <option value="4">⭐⭐⭐⭐ (4 - Easy)</option>
+                <option value="3">⭐⭐⭐ (3 - Moderate)</option>
+                <option value="2">⭐⭐ (2 - Difficult)</option>
+                <option value="1">⭐ (1 - Very Confusing)</option>
+              </select>
+            </div>
+            <div class="form-group" style="margin-bottom:0.4rem;">
+              <label style="font-size: 0.78rem;">Inventory Management (1-5)</label>
+              <select id="fb-rating-inventory" class="form-control" style="font-size:0.8rem; padding: 0.35rem 0.5rem;">
+                <option value="5">⭐⭐⭐⭐⭐ (5 - Perfect)</option>
+                <option value="4">⭐⭐⭐⭐ (4 - Good)</option>
+                <option value="3">⭐⭐⭐ (3 - Acceptable)</option>
+                <option value="2">⭐⭐ (2 - Needs Work)</option>
+                <option value="1">⭐ (1 - Poor)</option>
+              </select>
+            </div>
+            <div class="form-group" style="margin-bottom:0;">
+              <label style="font-size: 0.78rem;">Billing & POS Counter (1-5)</label>
+              <select id="fb-rating-pos" class="form-control" style="font-size:0.8rem; padding: 0.35rem 0.5rem;">
+                <option value="5">⭐⭐⭐⭐⭐ (5 - Fast & Smooth)</option>
+                <option value="4">⭐⭐⭐⭐ (4 - Good)</option>
+                <option value="3">⭐⭐⭐ (3 - Average)</option>
+                <option value="2">⭐⭐ (2 - Slow)</option>
+                <option value="1">⭐ (1 - Broken)</option>
+              </select>
+            </div>
+            <div class="form-group" style="margin-bottom:0;">
+              <label style="font-size: 0.78rem;">Overall Satisfaction (1-5)</label>
+              <select id="fb-rating-overall" class="form-control" style="font-size:0.8rem; padding: 0.35rem 0.5rem;">
+                <option value="5">⭐⭐⭐⭐⭐ (5 - Highly Satisfied)</option>
+                <option value="4">⭐⭐⭐⭐ (4 - Satisfied)</option>
+                <option value="3">⭐⭐⭐ (3 - Neutral)</option>
+                <option value="2">⭐⭐ (2 - Dissatisfied)</option>
+                <option value="1">⭐ (1 - Unusable)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Problems Encountered During Trial</label>
+            <textarea id="fb-problems" class="form-control" rows="2" placeholder="e.g. Need larger barcode font on mobile screen; customer forgot UPI reference..."></textarea>
+          </div>
+
+          <div class="form-group">
+            <label>Suggested Improvements</label>
+            <textarea id="fb-improvements" class="form-control" rows="2" placeholder="e.g. Add WhatsApp receipt button, daily cash reconciliation summary..."></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="ValidationModule.closeFeedbackModal()">Cancel</button>
+          <button type="submit" class="btn btn-primary"><i class="fa-solid fa-paper-plane"></i> Submit Feedback</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ========================================================= -->
+  <!-- ADMIN VERIFY PAYMENT RECONCILIATION MODAL                 -->
+  <!-- ========================================================= -->
+  <div class="modal-overlay" id="admin-verify-payment-modal">
+    <div class="modal-container" style="max-width: 440px;">
+      <div class="modal-header">
+        <h3 class="modal-title"><i class="fa-solid fa-money-bill-transfer" style="color:var(--primary-color);"></i> Reconcile Bank UPI Payment</h3>
+        <button class="modal-close-btn" onclick="document.getElementById('admin-verify-payment-modal').classList.remove('active')">&times;</button>
+      </div>
+      <form id="admin-verify-payment-form" onsubmit="App.submitAdminPaymentVerification(event)">
+        <input type="hidden" id="verify-order-id-input">
+        <div class="modal-body">
+          <div style="background: var(--bg-main); padding: 0.75rem; border-radius: var(--radius-sm); border: 1px solid var(--border-color); margin-bottom: 1rem; font-size: 0.85rem;">
+            <div>Order Reference: <strong id="verify-order-id-label">ORD-XXXX</strong></div>
+            <div style="margin-top: 0.25rem;">Payable Amount: <strong id="verify-amount-label" style="color:var(--primary-color);">₹0.00</strong></div>
+            <div style="margin-top: 0.25rem;">Customer: <span id="verify-customer-label">Name</span></div>
+          </div>
+          <div class="form-group">
+            <label>12-Digit Bank UTR / UPI Reference *</label>
+            <input type="text" id="verify-utr-input" class="form-control" maxlength="12" placeholder="Enter 12-digit UTR from shop bank statement" required style="font-weight: 700; letter-spacing: 1px;">
+            <small style="color: var(--text-muted); font-size: 0.72rem; display: block; margin-top: 0.25rem;">
+              Verifies transaction against bank credit and updates order status to Confirmed.
+            </small>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="document.getElementById('admin-verify-payment-modal').classList.remove('active')">Cancel</button>
+          <button type="submit" class="btn btn-primary"><i class="fa-solid fa-check"></i> Reconcile & Mark Paid</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ========================================================= -->
   <!-- ROLE AUTHENTICATION MODAL                                 -->
   <!-- ========================================================= -->
   <div class="modal-overlay" id="auth-modal">
@@ -1497,6 +1694,7 @@
   <script src="js/pos.js"></script>
   <script src="js/movement.js"></script>
   <script src="js/customer.js"></script>
+  <script src="js/validation.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>

@@ -545,6 +545,32 @@ const CustomerPortal = (function () {
     modal.classList.add('active');
   }
 
+  let selectedMockOutcome = null;
+
+  function selectMockOutcome(outcome) {
+    selectedMockOutcome = outcome;
+    const input = document.getElementById('checkout-mock-outcome');
+    if (input) input.value = outcome;
+
+    // Highlight active button
+    ['success', 'failure', 'timeout'].forEach(o => {
+      const btn = document.getElementById(`mock-btn-${o}`);
+      if (btn) {
+        if (o === outcome) {
+          btn.style.borderColor = '#ca8a04';
+          btn.style.background = '#fef08a';
+          btn.style.fontWeight = '700';
+        } else {
+          btn.style.borderColor = '#e2e8f0';
+          btn.style.background = 'white';
+          btn.style.fontWeight = 'normal';
+        }
+      }
+    });
+
+    App.showToast(`🧪 Mock payment option selected: ${outcome.toUpperCase()}`, 'info');
+  }
+
   async function processOrderSubmission(event) {
     if (event) event.preventDefault();
 
@@ -554,6 +580,8 @@ const CustomerPortal = (function () {
     const address = document.getElementById('checkout-address')?.value.trim();
     const deliveryType = document.querySelector('input[name="delivery-type"]:checked')?.value || 'Home Delivery';
     const paymentMethod = document.querySelector('input[name="payment-method"]:checked')?.value || 'UPI';
+    const utr = (document.getElementById('checkout-utr-input')?.value || '').trim();
+    const mockOutcome = document.getElementById('checkout-mock-outcome')?.value || '';
 
     if (!name || !phone) {
       App.showToast('Please fill in your name and phone number', 'warning');
@@ -565,6 +593,20 @@ const CustomerPortal = (function () {
       return;
     }
 
+    // Secure UPI verification check: Never allow plain click without UTR or explicit Mock selection
+    if (paymentMethod === 'UPI' && !mockOutcome) {
+      if (!utr) {
+        App.showToast('⚠️ Please enter the 12-digit UPI Reference (UTR) from your payment app.', 'warning');
+        document.getElementById('checkout-utr-input')?.focus();
+        return;
+      }
+      if (!/^\d{12}$/.test(utr)) {
+        App.showToast('⚠️ Invalid UTR! Bank UPI reference must be exactly 12 numeric digits.', 'error');
+        document.getElementById('checkout-utr-input')?.focus();
+        return;
+      }
+    }
+
     const totals = calculateCartTotals();
 
     try {
@@ -574,8 +616,10 @@ const CustomerPortal = (function () {
         email: email,
         address: deliveryType === 'Home Delivery' ? address : 'Fresh Supermart Store Pickup Counter (Main Market)',
         delivery_type: deliveryType,
-        payment_method: paymentMethod,
-        payment_status: paymentMethod === 'UPI' ? 'Pending Verification' : (paymentMethod === 'Cash on Delivery' ? 'Pay on Delivery' : 'Paid'),
+        payment_method: mockOutcome ? `UPI (🧪 Mock Sandbox)` : paymentMethod,
+        payment_status: 'Pending',
+        utr_number: utr,
+        is_mock: Boolean(mockOutcome),
         items: cart.map(item => ({
           product_id: item.product_id,
           product_name: item.product_name,
@@ -591,12 +635,41 @@ const CustomerPortal = (function () {
         grand_total: deliveryType === 'Store Pickup' ? (totals.grandTotal - totals.deliveryFee) : totals.grandTotal
       };
 
-      const createdOrder = await DB.createCustomerOrder(orderPayload);
+      // Atomic inventory deduction & order placement
+      const createdOrder = await DB.processAtomicOrder(orderPayload);
       currentOrder = createdOrder;
+
+      // Handle Mock vs Real UPI Verification
+      if (mockOutcome) {
+        const mockRes = await DB.processMockPayment({ order_id: createdOrder.order_id, outcome: mockOutcome });
+        createdOrder.payment_status = mockRes.order.payment_status;
+        createdOrder.order_status = mockRes.order.order_status;
+        App.showToast(mockRes.message, mockRes.success ? 'success' : 'warning');
+      } else if (paymentMethod === 'UPI' && utr) {
+        try {
+          const verifyRes = await DB.verifyPaymentRecord({
+            order_id: createdOrder.order_id,
+            payment_id: createdOrder.payment_id,
+            utr_number: utr,
+            amount: createdOrder.grand_total
+          });
+          createdOrder.payment_status = verifyRes.order.payment_status;
+          createdOrder.order_status = verifyRes.order.order_status;
+          App.showToast('🔒 UPI Payment verified with Bank UTR!', 'success');
+        } catch (vErr) {
+          App.showToast(`⚠️ Payment marked as Pending Verification: ${vErr.message}`, 'warning');
+        }
+      }
 
       // Clear checkout & cart
       cart = [];
       appliedCoupon = null;
+      selectedMockOutcome = null;
+      const mockInput = document.getElementById('checkout-mock-outcome');
+      if (mockInput) mockInput.value = '';
+      const utrInput = document.getElementById('checkout-utr-input');
+      if (utrInput) utrInput.value = '';
+
       updateCartBadges();
       renderProducts();
 
@@ -622,7 +695,19 @@ const CustomerPortal = (function () {
 
     document.getElementById('confirm-order-id').textContent = order.order_id;
     document.getElementById('confirm-total-amount').textContent = formatINR(order.grand_total);
-    document.getElementById('confirm-payment-method').textContent = `${order.payment_method} (${order.payment_status})`;
+    
+    const payStatusDisplay = document.getElementById('confirm-payment-method');
+    if (payStatusDisplay) {
+      const isPaid = order.payment_status === 'Paid';
+      payStatusDisplay.innerHTML = `
+        ${order.payment_method} 
+        <span class="badge ${isPaid ? 'badge-success' : 'badge-warning'}" style="margin-left: 0.35rem;">
+          ${order.payment_status}
+        </span>
+        ${order.utr_number ? `<div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.2rem;">UTR: ${order.utr_number}</div>` : ''}
+      `;
+    }
+
     document.getElementById('confirm-delivery-type').textContent = order.delivery_type;
 
     if (order.pickup_code) {

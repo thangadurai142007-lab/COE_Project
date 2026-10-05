@@ -422,6 +422,7 @@ const App = (function () {
   }
 
   // Customer Orders Management (Requirement 40, 41, 51)
+  // Customer Orders Management & Payment Reconciliation
   function renderCustomerOrdersTable() {
     const tbody = document.getElementById('customer-orders-table-body');
     if (!tbody) return;
@@ -432,56 +433,132 @@ const App = (function () {
     }
 
     tbody.innerHTML = customerOrders.map(o => {
-      let payStatusBadge = `<span class="badge" style="background:#fef3c7; color:#d97706;"><i class="fa-solid fa-hourglass-half"></i> Pending Verification</span>`;
-      if (o.payment_status === 'Verified' || o.payment_status === 'Paid') {
-        payStatusBadge = `<span class="badge badge-in-stock"><i class="fa-solid fa-circle-check"></i> Verified</span>`;
+      const isPaid = o.payment_status === 'Paid' || o.payment_status === 'Verified';
+      const isRefunded = o.payment_status === 'Refunded' || o.order_status === 'Cancelled';
+      const isFailed = o.payment_status === 'Failed';
+      const isPending = !isPaid && !isRefunded && !isFailed;
+
+      let payBadge = '';
+      if (isPaid) {
+        payBadge = `<span class="badge badge-in-stock"><i class="fa-solid fa-circle-check"></i> Paid</span>`;
+      } else if (isRefunded) {
+        payBadge = `<span class="badge" style="background:#f3e8ff; color:#7e22ce;"><i class="fa-solid fa-rotate-left"></i> Refunded</span>`;
+      } else if (isFailed) {
+        payBadge = `<span class="badge badge-danger"><i class="fa-solid fa-circle-xmark"></i> Failed</span>`;
+      } else {
+        payBadge = `<span class="badge" style="background:#fef3c7; color:#d97706;"><i class="fa-solid fa-hourglass-half"></i> Pending Verification</span>`;
       }
 
       return `
         <tr>
-          <td><strong>${o.order_id}</strong></td>
+          <td>
+            <strong>${o.order_id}</strong>
+            <div style="font-size:0.7rem; color:var(--text-muted); font-family:monospace;">${o.payment_id || 'PAY-N/A'}</div>
+          </td>
           <td>
             <strong>${o.customer_name}</strong>
             <div style="font-size:0.75rem; color:var(--text-muted);">${o.phone}</div>
+            <span class="badge" style="font-size:0.68rem; background:var(--bg-main); border:1px solid var(--border-color);">${o.delivery_type}</span>
           </td>
           <td>${new Date(o.date).toLocaleString('en-IN')}</td>
           <td>
             <div style="font-size:0.82rem;">
-              ${o.items.map(i => `<div>${i.product_name} &times; ${i.quantity}</div>`).join('')}
+              ${o.items.map(i => `<div>${i.product_name} &times; ${i.quantity} ${i.unit || ''}</div>`).join('')}
             </div>
           </td>
           <td><strong style="color:var(--primary-color); font-size:1rem;">${formatINR(o.grand_total)}</strong></td>
           <td>
-            <div>${o.payment_method}</div>
-            ${payStatusBadge}
-            ${o.payment_method === 'UPI' && o.payment_status === 'Pending Verification' ? `
-              <div style="margin-top:0.3rem;">
-                <button class="btn btn-primary btn-sm" style="font-size:0.7rem; padding:0.15rem 0.4rem;" onclick="App.confirmOrderPayment('${o.order_id}', 'Verified')">Confirm Payment</button>
+            <div style="font-weight:600; font-size:0.8rem;">${o.payment_method}</div>
+            <div style="margin: 0.2rem 0;">${payBadge}</div>
+            ${o.utr_number ? `<div style="font-size:0.72rem; color:var(--text-muted); font-family:monospace;">UTR: ${o.utr_number}</div>` : ''}
+            ${isPending ? `
+              <div style="margin-top:0.35rem;">
+                <button class="btn btn-primary btn-sm" style="font-size:0.7rem; padding:0.2rem 0.5rem;" onclick="App.openVerifyPaymentModal('${o.order_id}', ${o.grand_total}, '${o.customer_name}')">
+                  <i class="fa-solid fa-receipt"></i> Verify UTR
+                </button>
               </div>
             ` : ''}
           </td>
           <td>
-            <select class="form-control" style="padding:0.3rem 0.5rem; font-size:0.8rem;" onchange="App.changeOrderStatus('${o.order_id}', this.value)">
+            <select class="form-control" style="padding:0.3rem 0.5rem; font-size:0.8rem;" onchange="App.changeOrderStatus('${o.order_id}', this.value)" ${isRefunded ? 'disabled' : ''}>
               <option value="New" ${o.order_status === 'New' ? 'selected' : ''}>New Order</option>
               <option value="Confirmed" ${o.order_status === 'Confirmed' ? 'selected' : ''}>Confirmed</option>
               <option value="Preparing" ${o.order_status === 'Preparing' ? 'selected' : ''}>Preparing</option>
               <option value="Ready" ${o.order_status === 'Ready' ? 'selected' : ''}>Ready for Delivery</option>
               <option value="Out for Delivery" ${o.order_status === 'Out for Delivery' ? 'selected' : ''}>Out for Delivery</option>
               <option value="Delivered" ${o.order_status === 'Delivered' ? 'selected' : ''}>Delivered</option>
+              <option value="Cancelled" ${o.order_status === 'Cancelled' ? 'selected' : ''}>Cancelled</option>
             </select>
           </td>
           <td>
-            <button class="btn btn-secondary btn-sm" onclick="CustomerPortal.printCustomerInvoice('${o.order_id}')" title="Print Invoice"><i class="fa-solid fa-receipt"></i> Bill</button>
+            <div style="display:flex; gap:0.35rem;">
+              <button class="btn btn-secondary btn-sm" onclick="CustomerPortal.printCustomerInvoice('${o.order_id}')" title="Print Tax Invoice"><i class="fa-solid fa-receipt"></i> Bill</button>
+              ${!isRefunded ? `
+                <button class="btn btn-danger btn-sm" onclick="App.cancelAndRefundOrder('${o.order_id}')" title="Cancel Order & Atomically Restore Stock"><i class="fa-solid fa-ban"></i></button>
+              ` : ''}
+            </div>
           </td>
         </tr>
       `;
     }).join('');
   }
 
-  async function confirmOrderPayment(orderId, status) {
-    await DB.updatePaymentStatus(orderId, status);
-    showToast(`Payment for order ${orderId} marked as ${status}!`, 'success');
-    refreshAllData();
+  function openVerifyPaymentModal(orderId, amount, customerName) {
+    const modal = document.getElementById('admin-verify-payment-modal');
+    if (!modal) return;
+    document.getElementById('verify-order-id-input').value = orderId;
+    document.getElementById('verify-order-id-label').textContent = orderId;
+    document.getElementById('verify-amount-label').textContent = formatINR(amount);
+    document.getElementById('verify-customer-label').textContent = customerName;
+    const utrInput = document.getElementById('verify-utr-input');
+    if (utrInput) utrInput.value = '';
+    modal.classList.add('active');
+  }
+
+  async function submitAdminPaymentVerification(event) {
+    if (event) event.preventDefault();
+    const orderId = document.getElementById('verify-order-id-input')?.value;
+    const utr = (document.getElementById('verify-utr-input')?.value || '').trim();
+
+    if (!orderId || !utr) {
+      showToast('Please enter the 12-digit UTR reference number', 'warning');
+      return;
+    }
+
+    if (!/^\d{12}$/.test(utr)) {
+      showToast('Invalid UTR format! Bank reference must be exactly 12 numeric digits.', 'error');
+      return;
+    }
+
+    try {
+      const order = customerOrders.find(o => o.order_id === orderId);
+      await DB.verifyPaymentRecord({
+        order_id: orderId,
+        payment_id: order?.payment_id,
+        utr_number: utr,
+        amount: order?.grand_total
+      });
+
+      document.getElementById('admin-verify-payment-modal')?.classList.remove('active');
+      showToast(`🔒 Payment reconciled for ${orderId}! Order marked as Paid & Confirmed.`, 'success');
+      await refreshAllData();
+    } catch (err) {
+      showToast(err.message, 'error');
+    }
+  }
+
+  async function cancelAndRefundOrder(orderId) {
+    if (!confirm(`Are you sure you want to cancel order ${orderId}? This will automatically and atomically restore stock quantities in inventory.`)) {
+      return;
+    }
+
+    try {
+      await DB.cancelAndRefundOrder(orderId);
+      showToast(`✅ Order ${orderId} cancelled and stock safely restored!`, 'success');
+      await refreshAllData();
+    } catch (err) {
+      showToast(err.message, 'error');
+    }
   }
 
   async function changeOrderStatus(orderId, newStatus) {
@@ -845,6 +922,9 @@ const App = (function () {
 
         if (tabId === 'tab-movement') {
           ProductMovement.renderMovementAnalysis('30d');
+        }
+        if (tabId === 'tab-validation' && window.ValidationModule) {
+          ValidationModule.renderValidationDashboard();
         }
       });
     });
@@ -1212,6 +1292,9 @@ const App = (function () {
     openPurchaseOrderModal,
     receivePurchaseOrder,
     confirmOrderPayment,
+    openVerifyPaymentModal,
+    submitAdminPaymentVerification,
+    cancelAndRefundOrder,
     changeOrderStatus,
     showBarcodeModal,
     navigateToTab,

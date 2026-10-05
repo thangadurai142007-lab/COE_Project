@@ -291,19 +291,21 @@ const POSModule = (function () {
     const grandTotal = taxableSubtotal + tax;
 
     try {
-      // Record each cart item in backend/DB
-      for (const item of cart) {
-        await DB.recordSale({
-          source: 'pos',
+      // Execute atomic transactional sale across all items
+      const saleResult = await DB.processAtomicSale({
+        items: cart.map(item => ({
           product_id: item.product_id,
+          product_name: item.product_name,
           quantity_sold: item.quantity_sold,
-          unit_price: item.unit_price,
-          payment_method: paymentMethod
-        });
-      }
+          unit_price: item.unit_price
+        })),
+        payment_method: paymentMethod,
+        cashier: App.getCurrentUser()?.name || 'Cashier Admin'
+      });
 
       showReceiptModal({
         invoiceNo: `INV-${Date.now().toString().slice(-6)}`,
+        paymentId: saleResult.payment?.payment_id || `PAY-POS-${Date.now().toString().slice(-6)}`,
         date: new Date().toLocaleString('en-IN'),
         cashier: App.getCurrentUser()?.name || 'Cashier Admin',
         items: [...cart],

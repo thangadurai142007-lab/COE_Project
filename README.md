@@ -1,101 +1,140 @@
-# Grocery Shop Inventory Calculator & Management Web Application
+# Fresh Supermart – Production Grocery Inventory, POS & Online Shopping Management System
 
-A modern, responsive, full-featured **Grocery Shop Inventory Calculator and Management System** built with Node.js, Express, HTML5, Vanilla CSS, JavaScript, Chart.js, SheetJS, and jsPDF.
-
----
-
-## 🌟 Key Features
-
-### 📊 1. Modern Admin Dashboard
-- **Live Statistics Cards**: Total Products, Total Categories, Total Stock Quantity, Low Stock Alert Count, Out of Stock Count.
-- **Inventory Summary by Category**: Live summary cards for spec categories (**Rice, Oil, Biscuits, Beverages, Vegetables, Fruits, Dairy, Snacks, Cleaning Products, Personal Care**).
-- **Responsive Charts (Chart.js)**:
-  - 🍕 **Pie Chart**: Category distribution breakdown.
-  - 📊 **Bar Chart**: Stock level comparison against warning thresholds.
-  - 📈 **Line Chart**: Monthly stock inflow vs quantity sold trend lines.
-
-### 🧮 2. Interactive Stock Calculator
-- Real-time stock computation when entering quantity sold or restocked.
-- Displays:
-  - Initial Stock
-  - Remaining Stock
-  - Stock Availability status badge
-  - Visual Percentage Progress Bar
-  - Low Stock warning when remaining stock drops below minimum threshold.
-- *Example*: `Rice initial = 150 kg`, `Sold = 25 kg` $\rightarrow$ `Remaining = 125 kg (83% capacity, In Stock)`.
-
-### 📦 3. Product & Category Management
-- Auto Product ID, Product Name, Category, Brand, Purchase Price, Selling Price, Quantity, Unit (`Kg`, `Gram`, `Litre`, `ml`, `Packet`, `Bottle`, `Piece`), Barcode (auto-generated / custom), Expiry Date, Supplier Name, and Image preview.
-- Category CRUD operations with pre-populated grocery categories.
-
-### 🛒 4. POS & Quick Sales Counter
-- Interactive product catalog & search.
-- Live Cart builder with subtotal, tax (0%), and grand total calculations.
-- Automatic stock deduction upon checkout.
-
-### 📋 5. Report Generation & Export
-- Generates:
-  - Daily Stock Movement Report
-  - Weekly Report
-  - Monthly Valuation Report
-  - Category-wise Breakdown Report
-  - Low Stock Report
-  - Out of Stock Report
-- **1-Click Excel Export**: Downloads clean `.xlsx` spreadsheet using SheetJS.
-- **1-Click PDF Export**: Clean printable PDF document layout.
-
-### 🔔 6. Notifications & Theme
-- Real-time notification badge for low stock items and out of stock warnings.
-- Seamless **Light / Dark Mode Toggle** with CSS custom properties.
-
-### 💾 7. Database Backup & Restore
-- Download complete database as a formatted `JSON` backup file.
-- Restore inventory state anytime by uploading a backup file.
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-Vercel-success?style=for-the-badge&logo=vercel)](https://coe-project-flax.vercel.app/)
+[![GitHub Repo](https://img.shields.io/badge/GitHub-Repository-blue?style=for-the-badge&logo=github)](https://github.com/thangadurai142007-lab/COE_Project)
+[![Currency](https://img.shields.io/badge/Currency-INR%20(%E2%82%B9)-green?style=for-the-badge)](#)
+[![HCD](https://img.shields.io/badge/Evaluation-Project%20Better%20Tomorrow-purple?style=for-the-badge)](#)
 
 ---
 
-## 🚀 How to Run the Application
+## 📋 Executive Overview & Qbee Review 1 Enhancements
 
-### Option A: Running via Node.js Express Server
-1. Open terminal in the project directory:
-   ```bash
-   npm install
-   npm start
-   ```
-2. Open your web browser and navigate to:
-   ```
-   http://localhost:3000
-   ```
+Fresh Supermart is an end-to-end commercial grocery management and eCommerce platform specifically built for Indian retail supermarkets and local Kirana stores. Following the feedback from **Qbee AI Project Review 1**, the system has been upgraded to production-oriented stability:
 
-### Option B: Running Standalone in Any Browser (Zero Node.js Dependency)
-- Simply double-click or open `public/index.html` directly in any modern browser! The built-in LocalStorage fallback handles all data persistence automatically.
-
----
-
-## 🔐 Default Admin Credentials
-- **Username**: `DST`
-- **Password**: `1234` (or `1234`)
+1. **Secure UPI Payment Verification & Webhook Reconciliation**:
+   - Eliminated reliance on static QR scan assumption. Customers must provide a 12-digit Bank UPI Reference (UTR), or use an explicitly labeled, isolated **🧪 Mock Payment Sandbox** for defense demonstrations.
+   - Orders remain in `Pending Verification` until verified on the server or reconciled by the shopkeeper against bank statements.
+   - Idempotent webhook receiver (`POST /api/payments/webhook`) prevents duplicate transaction processing.
+2. **Atomic Inventory Concurrency & Race-Condition Locking**:
+   - Implemented an atomic transactional mutex lock (`withAtomicTransaction` / `withTransactionLock`) preventing negative inventory when POS walk-in billing and customer online ordering compete for shared stock simultaneously.
+   - Immediate rollback with clear shortage alerts: *"Sorry, only X units of [Product] are available."*
+3. **Human-Centered Design ("Project Better Tomorrow")**:
+   - Real-world **Shopkeeper Feedback Module** capturing store type, experience level, multi-point ratings (1–5), problems encountered, and suggestions.
+   - Interactive **10-Task Usability Testing Checklist** with built-in stopwatch timer, task difficulty rating, and 1-click CSV/JSON export for academic evaluation.
+   - Live **Concurrency Stress Test Simulator** proving transaction invariants.
 
 ---
 
-## 📁 Project Structure
+## 🔑 Demo Credentials & Access
+
+| Portal / Role | Access Method | Credentials |
+|---|---|---|
+| **🛍️ Customer Store** | Click **"🛍️ Customer Online Store"** in top bar | Public access (no login required) |
+| **🏪 Admin Console** | Click **"🏪 Admin Console"** in top bar | **Role:** Admin / Staff<br>• Admin: `admin` / `password123`<br>• Staff: `staff` / `staff123` |
+| **🔄 Reset Demo Data** | Top header: **"🔄 Reset Demo"** | Restores 20 realistic Indian grocery products, past sales, suppliers & sample orders |
+| **🎟️ Discount Coupon** | Customer Cart slide-over drawer | Code: `FRESH10` (10% instant discount) |
+
+---
+
+## 🛠️ Architecture & System Design
 
 ```
-PST/
-├── package.json               # Node.js configuration
-├── server.js                  # Express REST API backend server
-├── db_storage.json            # Auto-generated JSON database
-├── README.md                  # System documentation
-└── public/
-    ├── index.html             # Main Single Page Application UI
-    ├── css/
-    │   └── style.css          # Grocery Green & White Theme & Dark mode styles
-    └── js/
-        ├── db.js              # REST API + LocalStorage sync layer
-        ├── calculator.js      # Stock Calculator module
-        ├── charts.js          # Chart.js visualization engine
-        ├── reports.js         # Report generator (PDF & Excel export)
-        ├── pos.js             # POS sales checkout module
-        ├── barcode.js         # Barcode generator & scanner module
-        └── app.js             # Main application controller
+Fresh Supermart Ecosystem
+├── Public Frontend Client (public/)
+│   ├── index.html             # Unified SPA hosting Customer Storefront & Admin Console
+│   ├── css/style.css          # Commercial Grocery Green theme, Dark mode & responsive layouts
+│   └── js/
+│       ├── db.js              # Atomic transactional data engine with LocalStorage fallback
+│       ├── customer.js        # Customer storefront, cart drawer, UTR checkout & 7-stage order tracking
+│       ├── pos.js             # POS counter sales, barcode reader & dynamic UPI QR modal
+│       ├── validation.js      # Project Better Tomorrow feedback, 10-task runner & concurrency test
+│       ├── movement.js        # Fast/Slow/Non-moving product velocity analytics
+│       ├── charts.js          # 5 interactive Chart.js visualizations
+│       ├── reports.js         # Excel (.xlsx) and printable PDF reporting engine
+│       └── app.js             # Main orchestrator, role permissions & global search
+├── Server & API Layer
+│   ├── server.js              # Express REST API with atomic mutex & payment reconciliation
+│   ├── api/index.js           # Vercel Serverless Function entry point
+│   ├── vercel.json            # Vercel deployment routing & rewrites
+│   └── .env.example           # Production environment variable template
 ```
+
+---
+
+## 🔒 Security & Payment Verification Architecture
+
+### 1. Payment Verification Flow
+```
+Customer Checkout ➔ Select UPI ➔ Counter QR Displayed ➔ Customer Pays in Bank App
+   ➔ Enter 12-Digit Bank UTR ➔ Server-Side Format & Duplicate Check
+   ➔ Payment Record Created (`PAY-XXXX`, Status: Pending)
+   ➔ Reconciled via Webhook or Storekeeper Bank Audit ➔ Marked PAID
+   ➔ Order Confirmed ➔ Tax Invoice Generated
+```
+
+- **Order-linked Payment Records**: Every order produces a linked `PAY-XXXX` transaction record.
+- **UTR Format Enforcement**: Strict 12-digit numeric validation (`/^\d{12}$/`).
+- **Duplicate Prevention**: UTRs are checked against previous paid transactions to prevent replay claims.
+- **Idempotent Webhooks**: Handles payment gateway notifications without double-crediting or duplicate stock deductions.
+- **🧪 Mock Payment Sandbox**: Clearly labeled demo widget (`Mock Success`, `Mock Bank Decline`, `Mock Timeout`) that is isolated from real payment processing.
+
+---
+
+## ⚡ Atomic Inventory Concurrency Invariants
+
+When POS walk-in customers and web shoppers compete for limited stock:
+1. **Mutex Lock Acquired**: `withAtomicTransaction(async () => ...)` locks the inventory resource.
+2. **Pre-Validation**: Checks `current_stock >= requested_quantity` for **all** cart items.
+3. **Commit or Rollback**:
+   - If sufficient: Decrements stock atomically, creates sales and order records, commits transaction.
+   - If insufficient: Aborts immediately, executes complete rollback with 0 side effects, and returns:
+     > *"Sorry, only X units of [Product] are available."*
+4. **Order Cancellation & Refund**: When an order is cancelled, stock is restored atomically exactly once.
+
+---
+
+## 📊 Human-Centered Design: 10-Task Usability Testing Checklist
+
+The Admin **"Field Usability & HCD"** tab provides a practical testing runner for local store owners:
+
+1. **Add a New Grocery Product** (Name, Category, Stock, Batch)
+2. **Update Product Stock Level** (Using Stock Calculator or Edit modal)
+3. **Search for a Product** (Barcode scan or keyword search)
+4. **Create a POS Counter Bill** (Cart builder, GST, and printable tax invoice)
+5. **Process a UPI Payment & Verify UTR** (QR display and 12-digit UTR reconciliation)
+6. **Place a Customer Online Order** (Storefront browsing and coupon engine)
+7. **Check Inventory After Sale** (Verify stock deduction without negative balance)
+8. **Find Low-Stock & Expiring Products** (Dashboard alerts and < 30 days expiry countdown)
+9. **Analyze Fast vs Non-Moving Products** (Product movement velocity classification)
+10. **Generate & Export Sales / Stock Report** (SheetJS Excel `.xlsx` and PDF print)
+
+Testers can record: Outcome (`Success` / `Partial` / `Failure`), Time Taken (via built-in stopwatch), User Difficulty Rating (1–5), and Feedback Notes. Results can be exported directly to **CSV** or **JSON**.
+
+---
+
+## 🚀 How to Run & Deploy
+
+### Option 1: Local Development (Node.js Express)
+```bash
+git clone https://github.com/thangadurai142007-lab/COE_Project.git
+cd COE_Project
+npm install
+npm start
+```
+Open [http://localhost:3000](http://localhost:3000) in your browser.
+
+### Option 2: Live Vercel Deployment
+The repository is pre-configured with `vercel.json` routing:
+- Static assets served from `/public`
+- Serverless API functions routed to `/api/index.js`
+
+To deploy your own fork:
+```bash
+npm i -g vercel
+vercel --prod
+```
+
+---
+
+## 📄 License & Academic Attribution
+Developed for college project defense and Project Better Tomorrow evaluation. Distributed under the MIT License.
