@@ -2,6 +2,7 @@
 
 [![Live Demo](https://img.shields.io/badge/Live%20Demo-Vercel-success?style=for-the-badge&logo=vercel)](https://coe-project-flax.vercel.app/)
 [![GitHub Repo](https://img.shields.io/badge/GitHub-Repository-blue?style=for-the-badge&logo=github)](https://github.com/thangadurai142007-lab/COE_Project)
+[![Review 2 Report](https://img.shields.io/badge/Project%20Review-2%20Report%20(70%25)-orange?style=for-the-badge)](./PROJECT_REVIEW_2_REPORT.md)
 [![Currency](https://img.shields.io/badge/Currency-INR%20(%E2%82%B9)-green?style=for-the-badge)](#)
 [![HCD](https://img.shields.io/badge/Evaluation-Project%20Better%20Tomorrow-purple?style=for-the-badge)](#)
 
@@ -22,6 +23,7 @@ Fresh Supermart is an end-to-end commercial grocery management and eCommerce pla
    - Real-world **Shopkeeper Feedback Module** capturing store type, experience level, multi-point ratings (1–5), problems encountered, and suggestions.
    - Interactive **10-Task Usability Testing Checklist** with built-in stopwatch timer, task difficulty rating, and 1-click CSV/JSON export for academic evaluation.
    - Live **Concurrency Stress Test Simulator** proving transaction invariants.
+> 📄 **Official Review Document**: Read the complete [Project Review 2 Report](./PROJECT_REVIEW_2_REPORT.md) detailing 70% milestone progress, Review 1 feedback resolution, and the Stage 3 completion roadmap.
 
 ---
 
